@@ -12,6 +12,7 @@
 #include <TVector2.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TH3.h>
 #include <TF1.h>
 #include <TFitResult.h>
 #include <TClonesArray.h>
@@ -75,7 +76,9 @@ public:
   map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true);
   void GetProbability(bool ForceRecreate = false);
   void CreateProbability(TString pfilename);
+  double Optimize();
   double Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledjets, TLorentzVector &neutrino, TLorentzVector &WPrime);
+  int OptiJetMatch(double &dR);
 
   // double CalculateProbability(vector<int> jets);
   // double CalculateTypeProbability(vector<int> jets);
@@ -98,7 +101,7 @@ public:
   TLorentzVector LVWP, LVGenWPB, LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtW, LVGenOtT, LVGenOtB, LVGenLep, LVGenNeu, LVGenWPTWJ1, LVGenWPTWJ2;
   vector<TLorentzVector> LVGenWPTWJ, LVGenOutSort, LVJetSort;
   vector<int> GenWPTWJ;
-  map<int,int> AllJetMatchMap, OutJetMatchMap;
+  map<int,int> AllJetMatchMap, OutJetMatchMap, OptiJetMatchMap;
   double AllJetMatchMaxDeltaR, OutJetMatchDeltaR;
 
   //The probability calculations
@@ -109,6 +112,12 @@ public:
   TH1F *pGenTMass, *pGenWMass, *pGenWPdPhi;
   vector<TH1F*> pJet;
   vector<bool> BTags;
+
+  //Optimizer Results
+  vector<int> OptiBestPerm;
+  vector<TLorentzVector> OptiScaledjets;
+  TLorentzVector OptiNeutrino, OptiWPrime;
+  double OptiP;
 
   ofstream logfile;
 

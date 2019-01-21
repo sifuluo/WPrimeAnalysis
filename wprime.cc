@@ -28,11 +28,18 @@ void wprime() {
   samplebasepaths.push_back("/fdata/hepx/store/user/aoverton0342/madGraph/");
 
   vector<TString> folders;
-  folders.push_back("TDual_FormerLeptonic/");
-  // folders.push_back("TDual_LatterLeptonic/");
-
   TString savepath = "/fdata/hepx/store/user/siluo/wprime/results/";
-  TString savename = "TDualOptimized";
+  TString savename;
+  bool background = false;
+  if (!background) {
+    folders.push_back("TDual_FormerLeptonic/");
+    savename = "TDualOptimized";
+  }
+  else {
+    folders.push_back("ttbar");
+    savename = "Background";
+  }
+  // folders.push_back("TDual_LatterLeptonic/");
 
   Analyzer *a = new Analyzer(samplebasepaths,folders,30);
   a->SetOutput(savepath,savename);
@@ -44,6 +51,8 @@ void wprime() {
     a->SetStartEntry(0);
     a->ProcessEntries(100);
   }
+
+  TH1F* WPMassLeading = new TH1F("WPMassLeading","WPMasLeading", 2000, 0, 2000);
   // int zeromassevt[] = {9, 23,29, 32,33,59,76,81,87};
   // TH2F* HadWdRdM = new TH2F("HadWdRdM","HadWdRdM",50,0.,5.,100,-50.,50.);
   // TH2F* HadTdRdM = new TH2F("HadTdRdM","HadTdRdM",50,0.,5.,100,-50.,50.);
@@ -53,7 +62,7 @@ void wprime() {
   // TH1F* WPMass   = new TH1F("WPMass","WPMass",1200,0.,1200.);
   // TH1F* JetMatchTest = new TH1F("JetMatchMaxDeltaR","JetMatchDeltaR",40,0,4.);
   TH1F* WPMass = new TH1F("WPMass","WPrime Mass", 2000, 0, 2000);
-  //When not goot match is achieved in GenLevel
+  //When not good match is achieved in GenLevel
   TH1F* WPMass0CNM = new TH1F("WPMass0CNM","WPrime Mass", 2000, 0, 2000);
   TH1F* WPMass1CNM = new TH1F("WPMass1CNM","WPrime Mass", 2000, 0, 2000);
   TH1F* WPMass2CNM = new TH1F("WPMass2CNM","WPrime Mass", 2000, 0, 2000);
@@ -67,6 +76,8 @@ void wprime() {
   TH1F* WPMass3CM = new TH1F("WPMass3CM","WPrime Mass", 2000, 0, 2000);
   TH1F* WPMass4CM = new TH1F("WPMass4CM","WPrime Mass", 2000, 0, 2000);
   TH1F* WPMass5CM = new TH1F("WPMass5CM","WPrime Mass", 2000, 0, 2000);
+
+  TH3F* MaxDRVsMassVsP = new TH3F("MassVsMaxdRVsP","Mass Vs Max #Delta R Vs P; Mass; #Delta R; P ", 2000, 0, 2000, 50, 0, 5, 1000, 0, 1);
   // TH1F* WPMassWeight = new TH1F("WPMassWeight","WPrime Mass With Weight", 1000,0,1000);
   // Long64_t StartEntry = a->GetStartEntry();
   // Long64_t EndEntry = a->GetEndEntry();
@@ -123,25 +134,40 @@ void wprime() {
 
 
     // if ((a->GenWPTWJ).size() != 2) {cout <<  Form("GenWPTWJ size %d, of Entry: %d, GenWPTW: %d, GenWPTWJ",(int) (a->GenWPTWJ).size(), entry, a->GenWPTW)<<endl;continue;}
+    WPMassLeading->Fill( (a->LVJets[0]+a->LVJets[1]+a->LVJets[2]+a->LVJets[3]).M() );
+
     vector<int> BestPerm;
     vector<TLorentzVector> scaledjets;
     TLorentzVector neutrino, WPrime;
+    double p = a->Optimize(BestPerm, scaledjets, neutrino, WPrime);
     allentry++;
-    if (a->Optimize(BestPerm, scaledjets, neutrino, WPrime) == -1){
+    if (p == -1){
       npassentry++;
       continue;
     }
     double wpmass = WPrime.M();
     passentry++;
-    WPMass->Fill(WPrime.M());
+    WPMass->Fill(wpmass);
+
     int CorrectionPick = 0;
     vector<TLorentzVector> BestMatchJets = a->LVJetSort;
-    double MaxDeltaR = a->OutJetMatchDeltaR;
-    if (scaledjets.size() != BestMatchJets.size()) cout << "ScaledJets Size incorrect!!!" <<endl;
-    for (unsigned ijet = 0; ijet < BestMatchJets.size(); ++ijet) {
+
+    // HadJets Ambiguity
+    if (true) {
+      double d00(scaledjets[0].DeltaR(BestMatchJets[0])), d01(scaledjets[0].DeltaR(BestMatchJets[1])), d10(scaledjets[1].DeltaR(BestMatchJets[0])), d11(scaledjets[0].DeltaR(BestMatchJets[1]));
+      if ( (d00 <= 0.2 && d11 <= 0.2) || (d01 <= 0.2 && d10 <= 0.2) ) CorrectionPick +=2;
+      else if ( ( d00 <= 0.2 || d11 <= 0.2 || d01 <= 0.2 || d10 <= 0.2) ) CorrectionPick +=1;
+    }
+    for (unsigned ijet = 2; ijet < BestMatchJets.size(); ++ijet) {
       if ( (scaledjets[ijet].DeltaR(BestMatchJets[ijet])) <= 0.2  ) CorrectionPick++;
     }
-    if (MaxDeltaR <= 0.2) {
+
+    double OptiMaxDeltaR;
+    CorrectionPick = a->OptiJetMatch(OptiMaxDeltaR);
+    MaxDRVsMassVsP->Fill(wpmass, OptiMaxDeltaR, p);
+
+    // double MaxDeltaR = a->OutJetMatchDeltaR;
+    if (OptiMaxDeltaR <= 0.2) {
       if (CorrectionPick == 0) WPMass0CM->Fill(wpmass);
       else if (CorrectionPick == 1) WPMass1CM->Fill(wpmass);
       else if (CorrectionPick == 2) WPMass2CM->Fill(wpmass);
@@ -149,7 +175,7 @@ void wprime() {
       else if (CorrectionPick == 4) WPMass4CM->Fill(wpmass);
       else if (CorrectionPick == 5) WPMass5CM->Fill(wpmass);
     }
-    if (MaxDeltaR > 0.2)  {
+    if (OptiMaxDeltaR > 0.2)  {
       if (CorrectionPick == 0) WPMass0CNM->Fill(wpmass);
       else if (CorrectionPick == 1) WPMass1CNM->Fill(wpmass);
       else if (CorrectionPick == 2) WPMass2CNM->Fill(wpmass);

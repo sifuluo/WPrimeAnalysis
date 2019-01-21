@@ -625,6 +625,10 @@ void Analyzer::CreateProbability(TString pfilename) {
   cout << "Probability Histograms done. Starting Analysis." <<endl;
 }
 
+double Analyzer::Optimize() {
+  return Optimize(OptiBestPerm, OptiScaledjets, OptiNeutrino, OptiWPrime);
+}
+
 double Analyzer::Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledjets, TLorentzVector &neutrino, TLorentzVector &WPrime) {
   Optimizer *o = new Optimizer(LVJets, BTags);
   o->SetLepton(LVLeptons[0]);
@@ -632,8 +636,12 @@ double Analyzer::Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledj
   o->SetPFile(PFile);
   o->SetEtaBins(etabins);
   o->Optimize();
-  double p = o->GetBestP();
-  if (p <= 0) {
+
+  OptiBestPerm.clear();
+  OptiScaledjets.clear();
+  OptiP = 0;
+  OptiP = o->GetBestP();
+  if (OptiP <= 0) {
     logfile <<"This event:"<<iEntry<< " Does not have neutrino solution, Lepton Pt: " << LVLeptons[0].Pt()<<endl;
     return -1;
   }
@@ -641,8 +649,30 @@ double Analyzer::Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledj
   scaledjets = o->GetBestLVJets();
   neutrino = o->GetBestNeutrino();
   WPrime = o->GetWPrime();
+
+  OptiBestPerm = BestPerm;
+  OptiScaledjets = scaledjets;
+  OptiNeutrino = neutrino;
+  OptiWPrime = WPrime;
   // cout << Form("BestP: %f, scaledjets: %i, neutrino:(%f,%f,%f,%f),WPrimeMass: %f",p, scaledjets.size(), neutrino.X(),neutrino.Y(),neutrino.Z(),neutrino.T(),WPrime.M())<<endl;
-  return p;
+  return OptiP;
+}
+
+int Analyzer::OptiJetMatch(double &dR) {
+  int MatchedJets = 0;
+  int mwptwj(0), mwptb(0), mlepb(0), mwpb(0);
+  OptiJetMatchMap = JetMatch(LVGenOutSort, OptiScaledjets, dR, false);
+
+  if (OptiJetMatchMap[0] == 0 || OptiJetMatchMap[0] == 1) mwptwj++;
+  if (OptiJetMatchMap[1] == 0 || OptiJetMatchMap[1] == 1) mwptwj++;
+  if (OptiJetMatchMap[2] == 2) mwptb = 1;
+  if (OptiJetMatchMap[3] == 3) mlepb = 1;
+  if (OptiJetMatchMap[4] == 4) mwpb = 1;
+
+  MatchedJets = mwptwj + mwptb + mlepb + mwpb;
+
+  return MatchedJets;
+
 }
 
 #endif
