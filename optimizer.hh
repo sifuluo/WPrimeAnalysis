@@ -45,6 +45,9 @@ public:
   vector<int> GetBestPerm();
   vector<double> GetBestScales();
   vector<TLorentzVector> GetBestLVJets();
+  double GetBestPJES();
+  double GetBestPMass();
+  double GetBestPType();
   TLorentzVector GetBestNeutrino();
   TLorentzVector GetWPrime();
 
@@ -65,12 +68,12 @@ private:
   static vector<TH1F*> pJet;
   static vector<vector <int> > Permutations;
   static TLorentzVector LVLep, LVMET, LVNeu1, LVNeu2, LVNeu, BestNeutrino;
-  static double LepWMass, BestP;
+  static double LepWMass, BestP, BestPJES, BestPMass, BestPType;
   static vector<int> BestPerm;
   static vector<double> BestScales;
   static ROOT::Math::Minimizer *mini;
   static TF1* stdfgaus, *TopMassDis, *WMassDis;
-  static bool debug;
+  static bool debug, resulting;
 };
 
 

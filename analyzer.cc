@@ -626,10 +626,11 @@ void Analyzer::CreateProbability(TString pfilename) {
 }
 
 double Analyzer::Optimize() {
-  return Optimize(OptiBestPerm, OptiScaledjets, OptiNeutrino, OptiWPrime);
+  return 0;
+  // return Optimize(OptiBestPerm, OptiScaledjets, OptiNeutrino, OptiWPrime);
 }
 
-double Analyzer::Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledjets, TLorentzVector &neutrino, TLorentzVector &WPrime) {
+double Analyzer::Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledjets, TLorentzVector &neutrino, TLorentzVector &WPrime, double &pjes, double &pmass, double &ptype) {
   Optimizer *o = new Optimizer(LVJets, BTags);
   o->SetLepton(LVLeptons[0]);
   o->SetMET(LVMET);
@@ -654,6 +655,10 @@ double Analyzer::Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledj
   OptiScaledjets = scaledjets;
   OptiNeutrino = neutrino;
   OptiWPrime = WPrime;
+  pjes = o->GetBestPJES();
+  pmass = o->GetBestPMass();
+  ptype = o->GetBestPType();
+
   // cout << Form("BestP: %f, scaledjets: %i, neutrino:(%f,%f,%f,%f),WPrimeMass: %f",p, scaledjets.size(), neutrino.X(),neutrino.Y(),neutrino.Z(),neutrino.T(),WPrime.M())<<endl;
   return OptiP;
 }

@@ -77,7 +77,7 @@ public:
   void GetProbability(bool ForceRecreate = false);
   void CreateProbability(TString pfilename);
   double Optimize();
-  double Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledjets, TLorentzVector &neutrino, TLorentzVector &WPrime);
+  double Optimize(vector<int> &BestPerm, vector<TLorentzVector> &scaledjets, TLorentzVector &neutrino, TLorentzVector &WPrime, double &pjes, double &pmass, double &ptype);
   int OptiJetMatch(double &dR);
 
   // double CalculateProbability(vector<int> jets);

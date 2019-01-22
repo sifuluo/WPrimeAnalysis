@@ -78,6 +78,7 @@ void wprime() {
   TH1F* WPMass5CM = new TH1F("WPMass5CM","WPrime Mass", 2000, 0, 2000);
 
   TH3F* MaxDRVsMassVsP = new TH3F("MassVsMaxdRVsP","Mass Vs Max #Delta R Vs P; Mass; #Delta R; P ", 2000, 0, 2000, 50, 0, 5, 1000, 0, 1);
+  TH2F* PDis = new TH2F("PDis","Probability distributions; Probability; PJES, PMass PType", 2000,0.,2., 3, -0.5, 2.5);
   // TH1F* WPMassWeight = new TH1F("WPMassWeight","WPrime Mass With Weight", 1000,0,1000);
   // Long64_t StartEntry = a->GetStartEntry();
   // Long64_t EndEntry = a->GetEndEntry();
@@ -139,7 +140,12 @@ void wprime() {
     vector<int> BestPerm;
     vector<TLorentzVector> scaledjets;
     TLorentzVector neutrino, WPrime;
-    double p = a->Optimize(BestPerm, scaledjets, neutrino, WPrime);
+    double pjes,pmass,ptype;
+    double p = a->Optimize(BestPerm, scaledjets, neutrino, WPrime, pjes, pmass, ptype);
+    PDis->Fill(pjes,0);
+    PDis->Fill(pmass,1);
+    PDis->Fill(ptype,2);
+
     allentry++;
     if (p == -1){
       npassentry++;

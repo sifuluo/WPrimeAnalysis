@@ -22,6 +22,9 @@ vector<TLorentzVector> Optimizer::scaledjets;
 
 //Optimize Result
 double Optimizer::BestP;
+double Optimizer::BestPJES;
+double Optimizer::BestPMass;
+double Optimizer::BestPType;
 vector<int> Optimizer::BestPerm;
 vector<double> Optimizer::BestScales;
 TLorentzVector Optimizer::BestNeutrino;
@@ -29,6 +32,7 @@ ROOT::Math::Minimizer* Optimizer::mini = ROOT::Math::Factory::CreateMinimizer("T
 TF1* Optimizer::stdfgaus = new TF1("fgaus","gaus");
 TF1* Optimizer::TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
 TF1* Optimizer::WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
+bool Optimizer::resulting = false;
 bool Optimizer::debug = false;
 
 
@@ -176,6 +180,10 @@ double Optimizer::GetpJES(const double *scales) {
   if ( PNeutrino > 0 ) {
     PMass = GetpMass(scaledjets);
     res = -1.0 * PJES * PMass;
+    if (resulting) {
+      BestPJES = PJES;
+      BestPMass = PMass;
+    }
     if (debug){
       cout << Form("Scales: %f,%f,%f,%f",scales[0],scales[1],scales[2],scales[3])<<endl;
       cout <<"Positive, PMass= " << PMass << "; PJES = "<<PJES <<endl;
@@ -183,6 +191,10 @@ double Optimizer::GetpJES(const double *scales) {
 
   }
   else {
+    if (resulting) {
+      BestPJES = PJES;
+      BestPMass = -1;
+    }
     PMass = 0;
     res = (-1.0 * PNeutrino);
   }
@@ -259,7 +271,7 @@ double Optimizer::OptimizeThisPerm(vector<double> &ThisScale_) {
       cout << "Minimizer Worked" <<endl;
     }
 
-    return (-1.0 * mini->MinValue());
+    return (-1.0 * (mini->MinValue()) );
   }
   if (debug) {
     cout <<"No Minimizer" <<endl;
@@ -298,6 +310,7 @@ void Optimizer::FindBestPerm() {
     vector<double> ThisScale;
     double ThisP = OptimizeThisPerm(ThisScale) * pType;
     if (ThisP > BestP) {
+      BestPType = pType;
       BestP = ThisP;
       BestPerm = ThisPerm;
       BestScales = ThisScale;
@@ -338,12 +351,27 @@ vector<TLorentzVector> Optimizer::GetBestLVJets() {
     scales[i] = BestScales[i];
   }
   // cout << Form("scales: %f, %f, %f ,%f ,%f",scales[0],scales[1],scales[2],scales[3],scales[4])<<endl;
-
+  //Getting the intermediate quantities.
+  resulting = true;
   GetpJES(scales);
+  resulting = false;
+
   BestNeutrino = LVNeu;
   vector<TLorentzVector> out = scaledjets;
   out.push_back(OrderedJets[4]);
   return out;
+}
+
+double Optimizer::GetBestPJES() {
+  return BestPJES;
+}
+
+double Optimizer::GetBestPMass() {
+  return BestPMass;
+}
+
+double Optimizer::GetBestPType() {
+  return BestPType;
 }
 
 TLorentzVector Optimizer::GetBestNeutrino() {
