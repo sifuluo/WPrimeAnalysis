@@ -3,10 +3,11 @@
 
 #include "analyzer.hh"
 
-Analyzer::Analyzer(vector<TString> basepaths, vector<TString> inputfolders, double pt) {
+Analyzer::Analyzer(vector<TString> basepaths, vector<TString> inputfolders, int ir, double pt) {
   // gSystem->Load("libDelphes");
   verbose = false;
-  vector<TString> fnames = SearchFiles(basepaths, inputfolders, false);
+  irun = ir;
+  vector<TString> fnames = SearchFiles(basepaths, inputfolders, irun, true);
   chain_ = new TChain("Delphes");
   for(unsigned fIdx=0; fIdx<fnames.size(); ++fIdx) chain_->Add(fnames[fIdx]);
   treeReader = new ExRootTreeReader(chain_);
@@ -70,6 +71,8 @@ void Analyzer::SetEndEntry(int endentry) {
   EndEntry = endentry;
 }
 void Analyzer::SetOutput(TString outputfolder, TString outputname) {
+  if (irun != 0) outputname += Form("_%.2i",irun);
+  if (irun != 0) outputfolder += "massresult/";
   OutputName = outputfolder+outputname;
   OutputLogName = outputfolder+"logs/"+ outputname;
   TString ofilename = OutputName+".root";
@@ -102,7 +105,8 @@ int Analyzer::ReadEvent(Int_t ievt, bool debug) {
   Analyzer::GetInfos();
 
   // Preselection
-  if (GenWP.size() != 1 || LVLeptons.size() != 1 || Jets.size() < 5) return -1;
+  // if (GenWP.size() != 1 || LVLeptons.size() != 1 || Jets.size() < 5) return -1;
+  if (LVLeptons.size() != 1 || Jets.size() < 5) return -1;
   return 0;
 }
 

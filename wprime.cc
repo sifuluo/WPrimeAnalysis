@@ -22,7 +22,7 @@
 
 using namespace std;
 
-void wprime() {
+void wprime(int Sampletype, int irun = 0) {
   // gSystem->Load("libDelphes");
   vector<TString> samplebasepaths;
   samplebasepaths.push_back("/fdata/hepx/store/user/aoverton0342/madGraph/");
@@ -30,20 +30,22 @@ void wprime() {
   vector<TString> folders;
   TString savepath = "/fdata/hepx/store/user/siluo/wprime/results/";
   TString savename;
-  bool background = false;
-  if (!background) {
+  if (Sampletype == 0) {
     folders.push_back("TDual_FormerLeptonic/");
-    savename = "TDualOptimized";
+    savename = "TDual_FormerLeptonic_Optimized";
+  }
+  else if (Sampletype == 1) {
+    folders.push_back("TDual_LatterLeptonic/");
+    savename = "TDual_LatterLeptonic_Optimized";
   }
   else {
-    folders.push_back("ttbar");
+    folders.push_back("ttbar/");
     savename = "Background";
   }
-  // folders.push_back("TDual_LatterLeptonic/");
 
-  Analyzer *a = new Analyzer(samplebasepaths,folders,30);
+  Analyzer *a = new Analyzer(samplebasepaths,folders,irun, 30);
   a->SetOutput(savepath,savename);
-  a->GetProbability(false);
+  a->GetProbability(true);
   ofstream &logfile = a->logfile;
   // TFile* PFile= a->PFile;
   bool debug = false;

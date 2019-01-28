@@ -40,7 +40,7 @@
 
 class Analyzer{
 public:
-  Analyzer(vector<TString> basepaths, vector<TString> inputfolders, double pt = 30);
+  Analyzer(vector<TString> basepaths, vector<TString> inputfolders,int irun, double pt = 30);
   void SetStartEntry(int starentry);
   void ProcessEntries(int nprocess);
   void SetEndEntry(int endentry);
@@ -132,7 +132,7 @@ private:
   Long64_t nEntries, iEntry, StartEntry, EndEntry;
   double JetPtThreshold;
   bool verbose;
-  int JetPtCutOff, JetNumberCutoff;
+  int JetPtCutOff, JetNumberCutoff, irun;
 };
 
 

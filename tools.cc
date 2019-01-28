@@ -43,20 +43,44 @@ void printprogress (int entry, int entries, int dividen = 100) {
 }
 
 //Get all sample filenames within given path.
-vector<TString> SearchFiles(vector<TString> samplebasepaths, vector<TString> folders, bool report = true) {
+vector<TString> SearchFiles(vector<TString> samplebasepaths, vector<TString> folders, int irun, bool report = true) {
   vector<TString> fnames;
   for (unsigned ipath = 0; ipath < samplebasepaths.size(); ++ipath){
     for (unsigned ifolder = 0; ifolder < folders.size(); ++ifolder){
-      for (unsigned irun = 1; irun <= 10; ++irun) {
+      if (irun != 0) {
+        unsigned itrun = irun;
         for (unsigned itag = 1; itag < 3; ++itag) {
-          TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",irun, itag );
+          TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag);
           if (fileexists(filename)) {
             fnames.push_back(filename);
           }
         }
       }
+      else {
+        unsigned itrun = 1;
+        TString runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i",itrun);
+        while (fileexists(runname)){
+          for (unsigned itag = 1; itag < 3; ++itag) {
+            TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag );
+            if (fileexists(filename)) {
+              fnames.push_back(filename);
+            }
+          }
+          itrun++;
+          runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i",itrun);
+        }
+      }
+      // for (unsigned itrun = 1; itrun <= 10; ++itrun) {
+      //   for (unsigned itag = 1; itag < 3; ++itag) {
+      //     TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag );
+      //     if (fileexists(filename)) {
+      //       fnames.push_back(filename);
+      //     }
+      //   }
+      // }
     }
   }
+  if（fnames.empty()) cout << "!!!   No file found   !!!" <<endl;
   if (report) {
     cout << " Found sample files are :" << endl;
     for (unsigned i = 0; i< fnames.size(); ++i) {
