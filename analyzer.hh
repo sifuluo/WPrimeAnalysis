@@ -51,6 +51,7 @@ public:
   Long64_t GetEndEntry();
   int ReadEvent(Int_t ievt, bool debug = false);
   void GetInfos();
+  void MakeMatchMaps();
   void SortInitialize();
   void SortGenParticle();
   void AssignGenParticles();
@@ -88,12 +89,12 @@ public:
 
   //Sorting Particles
   vector<GenParticle*> GenParticles;
-  vector<Jet*> AllJets, Jets, BJets, NBJets;
+  vector<Jet*> AllJets, Jets, BJets, NBJets, GenJets;
   vector<Electron*> Electrons;
   vector<Muon*> Muons;
   MissingET* MET;
   vector<int> GenD, GenU, GenS, GenC, GenB, GenT, GenE, GenNuE, GenMu, GenNuMu, GenTau, GenG, GenGamma, GenW, GenWP, GenOut, GenOutSort;
-  vector<TLorentzVector> LVAllJets, LVJets, LVBJets, LVNBJets, LVElectrons, LVMuons, LVLeptons, LVSoftLep, LVGenJets; //These are all reconstructed TLorentzVectors.
+  vector<TLorentzVector> LVAllJets, LVJets, LVBJets, LVNBJets, LVElectrons, LVMuons, LVLeptons, LVSoftLep, LVOutPart, LVGenJets; //These are all reconstructed TLorentzVectors.
   TLorentzVector LVMET;
 
   //Assigning Particles
@@ -101,8 +102,8 @@ public:
   TLorentzVector LVWP, LVGenWPB, LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtW, LVGenOtT, LVGenOtB, LVGenLep, LVGenNeu, LVGenWPTWJ1, LVGenWPTWJ2;
   vector<TLorentzVector> LVGenWPTWJ, LVGenOutSort, LVJetSort;
   vector<int> GenWPTWJ;
-  map<int,int> AllJetMatchMap, OutJetMatchMap, OptiJetMatchMap;
-  double AllJetMatchMaxDeltaR, OutJetMatchDeltaR;
+  map<int,int> AllJetMatchMap, OutJetMatchMap, GenJetJetMap, OutPartGenJetMap, OptiJetMatchMap;
+  double AllJetMatchMaxDeltaR, OutJetMatchDeltaR, GenJetJetMapDeltaR, OutPartGenJetMapDeltaR;
 
   //The probability calculations
   TFile* PFile;
@@ -125,10 +126,10 @@ public:
 
 private:
   ExRootTreeReader *treeReader;
-  TClonesArray *branchGen, *branchJet, *branchElectron, *branchMuon, *branchMPT;
+  TClonesArray *branchGen, *branchJet, *branchElectron, *branchMuon, *branchMPT, *branchGenJet;
   TFile *ofile;
   TChain* chain_;
-  TString OutputName, OutputLogName;
+  TString OutputName, OutputLogName, UsePFilename, UsePFilefolder;
   Long64_t nEntries, iEntry, StartEntry, EndEntry;
   double JetPtThreshold;
   bool verbose;

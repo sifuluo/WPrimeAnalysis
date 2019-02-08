@@ -80,7 +80,7 @@ vector<TString> SearchFiles(vector<TString> samplebasepaths, vector<TString> fol
       // }
     }
   }
-  if（fnames.empty()) cout << "!!!   No file found   !!!" <<endl;
+  if (fnames.empty()) cout << "!!!   No File Found   !!!" <<endl;
   if (report) {
     cout << " Found sample files are :" << endl;
     for (unsigned i = 0; i< fnames.size(); ++i) {

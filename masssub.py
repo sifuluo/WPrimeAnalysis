@@ -6,14 +6,15 @@ Sampletype = 2
 # 0 for TDual_FormerLeptonic
 # 1 for TDual_LatterLeptonic
 # 2 for Background
+Samplename = ""
 if Sampletype == 0:
-  basepath += "TDual_FormerLeptonic/"
+  Samplename = "TDual_FormerLeptonic"
 elif Sampletype == 1:
-  basepath += "TDual_LatterLeptonic/"
+  Samplename = "TDual_LatterLeptonic"
 else:
-  basepath += "ttbar/"
+  Samplename = "ttbar2"
 
-basepath += "Events/"
+basepath = basepath + Samplename + "/Events/"
 
 templatef = open("submits/temp.slurm","r")
 templatec = templatef.readlines()
@@ -26,12 +27,15 @@ while True:
   if not os.path.isdir(folder_path):
     break
 maxrun = irun - 1
-command1 = "#SBATCH -a 1-%d"% (maxrun)
+command1 = "#SBATCH -a 0-%d"% (maxrun)
 command2 = "root -l -b \"wprime.cc+(%d,$SLURM_ARRAY_TASK_ID)\" \n" % (Sampletype)
-print(command1)
+command3 = "#SBATCH -o slurmlog/%s_log_%%A-%%a.out \n" % (Samplename)
+command4 = "#SBATCH -J WPrime_%s" % (Samplename)
 contents = templatec
-contents.insert(16,command2)
+contents.insert(16, command2)
+contents.insert(7, command3)
 contents.insert(6, command1)
+contents.insert(1,command4)
 contents = "".join(contents)
 batchfile = open("submit_%i.slurm" % (Sampletype),"w+")
 batchfile.write(contents)

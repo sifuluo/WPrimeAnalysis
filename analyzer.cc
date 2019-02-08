@@ -16,6 +16,7 @@ Analyzer::Analyzer(vector<TString> basepaths, vector<TString> inputfolders, int 
   branchElectron = treeReader->UseBranch("Electron");
   branchMPT = treeReader->UseBranch("MissingET");
   branchGen = treeReader->UseBranch("Particle");
+  branchGenJet = treeReader->UseBranch("GenJet");
   nEntries = treeReader->GetEntries();
   cout << "Total Number of Events in this dataset is: " << nEntries << endl;
   StartEntry = 0;
@@ -71,6 +72,8 @@ void Analyzer::SetEndEntry(int endentry) {
   EndEntry = endentry;
 }
 void Analyzer::SetOutput(TString outputfolder, TString outputname) {
+  UsePFilename = outputname;
+  UsePFilefolder = outputfolder;
   if (irun != 0) outputname += Form("_%.2i",irun);
   if (irun != 0) outputfolder += "massresult/";
   OutputName = outputfolder+outputname;
@@ -137,12 +140,18 @@ void Analyzer::GetInfos() {
     }
   }
 
-  for (unsigned ihad = 0; ihad < GenOut.size(); ++ihad) {
-    LVGenJets.push_back(GenParticles[ToBeHadron(GenOut[ihad])]->P4());
+  for (int it = 0; it < branchGenJet->GetEntries(); ++it) {
+    Jet* genjet = (Jet*) branchGenJet->At(it);
+    GenJets.push_back(genjet);
+    LVGenJets.push_back(genjet->P4());
   }
-  AllJetMatchMap = JetMatch(LVGenJets, LVJets, AllJetMatchMaxDeltaR, false);
 
-  for (int it = 0; it < branchMuon->GetEntries(); ++it){
+  for (unsigned ihad = 0; ihad < GenOut.size(); ++ihad) {
+    LVOutPart.push_back(GenParticles[ToBeHadron(GenOut[ihad])]->P4());
+  }
+  AllJetMatchMap = JetMatch(LVOutPart, LVJets, AllJetMatchMaxDeltaR, false);
+
+  for (int it = 0; it < branchMuon->GetEntries(); ++it) {
     Muon* mu = (Muon*) branchMuon->At(it);
     Muons.push_back(mu);
     LVMuons.push_back(mu->P4());
@@ -167,6 +176,16 @@ void Analyzer::GetInfos() {
     MET = (MissingET*) branchMPT->At(0);
     LVMET = MET->P4();
   }
+}
+
+
+void Analyzer::MakeMatchMaps() {
+  // logfile << Form("Event: %d\n",iEntry);
+  OutPartGenJetMap = JetMatch(LVOutPart,LVGenJets,OutPartGenJetMapDeltaR, true);
+  // logfile << Form("OutPart Size = %d, GenJet size = %d, OutPartGen Size = %d, MaxDR = %f\n",LVOutPart.size(), LVGenJets.size(), OutPartGenJetMap.size(),OutPartGenJetMapDeltaR);
+  GenJetJetMap = JetMatch(LVGenJets,LVJets,GenJetJetMapDeltaR,true);
+  // logfile << Form("GenJet Size = %d, Jet Size = %d, GenJetJet Size = %d, MaxDR = %f\n",LVGenJets.size(), LVJets.size(), GenJetJetMap.size(),GenJetJetMapDeltaR);
+  // logfile <<Form("c1 = %d, c2 = %d, c3 = %d \n", c1, c2,c3);
 }
 
 void Analyzer::SortInitialize() {
@@ -204,11 +223,11 @@ void Analyzer::SortInitialize() {
   LVMuons.clear();
   LVLeptons.clear();
   LVSoftLep.clear();
-  LVGenJets.clear();
+  LVOutPart.clear();
   LVGenOutSort.clear();
   AllJetMatchMap.clear();
-  OutJetMatchMap.clear();
-  LVJetSort.clear();
+  // OutJetMatchMap.clear();
+  // LVJetSort.clear();
 }
 
 void Analyzer::SortGenParticle() {
@@ -304,10 +323,10 @@ void Analyzer::AssignGenParticles() {
   for (unsigned i = 0; i < GenOutSort.size(); ++i){
     LVGenOutSort.push_back(GenParticles[ToBeHadron(GenOutSort[i])]->P4());
   }
-  OutJetMatchMap = JetMatch(LVGenOutSort,LVJets,OutJetMatchDeltaR,false);
-  for (map<int,int>::iterator it = OutJetMatchMap.begin(); it != OutJetMatchMap.end(); ++it) {
-    LVJetSort.push_back(LVJets[it->second]);
-  }
+  // OutJetMatchMap = JetMatch(LVGenOutSort,LVJets,OutJetMatchDeltaR,false);
+  // for (map<int,int>::iterator it = OutJetMatchMap.begin(); it != OutJetMatchMap.end(); ++it) {
+  //   LVJetSort.push_back(LVJets[it->second]);
+  // }
 }
 
 void Analyzer::SaveOutput() {
@@ -508,8 +527,8 @@ map<int,int> Analyzer::JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVecto
         }
       }
     }
-    if (it > x - 2) maxDeltaR = minR;
     if (cut && minR > 0.2) break;
+    if (it > x - 2) maxDeltaR = minR;
     for (unsigned iv1 = 0; iv1 < v1.size(); ++iv1) deltaRs[iv1][minv2] = 1000;
     for (unsigned iv2 = 0; iv2 < v2.size(); ++iv2) deltaRs[minv1][iv2] = 1000;
     out.insert(pair<int, int>(minv1, minv2));
@@ -519,8 +538,10 @@ map<int,int> Analyzer::JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVecto
 
 void Analyzer::GetProbability(bool ForceRecreate) {
   TString pfilename = OutputName+"_Probability.root";
-  if (!fileexists(pfilename) || ForceRecreate) CreateProbability(pfilename);
+  // if (!fileexists(pfilename) || ForceRecreate) CreateProbability(pfilename);
+  if (ForceRecreate) CreateProbability(pfilename);
   else {
+    pfilename = UsePFilefolder+UsePFilename+"_Probability.root";
     PFile = new TFile(pfilename,"READ");
     ofile->cd();
   //   pJet.clear();
@@ -577,12 +598,12 @@ void Analyzer::CreateProbability(TString pfilename) {
 
   for (Long64_t ievt = 0; ievt < nEntries; ++ievt) {
     if (ReadEvent(ievt,false) == -1) continue;
-    AssignGenParticles();
+    // AssignGenParticles();
     //Jet Resolution;
     map<int,int> match = AllJetMatchMap;
     for (map<int,int>::iterator it = match.begin(); it != match.end(); ++it) {
       TLorentzVector LVGen, LVReco;
-      LVGen = LVGenJets[it->first];
+      LVGen = LVOutPart[it->first];
       LVReco = LVJets[it->second];
       double deltaR = LVReco.DeltaR(LVGen);
       for (unsigned ieta = 0; ieta < etabins.size() - 1; ++ieta) {
