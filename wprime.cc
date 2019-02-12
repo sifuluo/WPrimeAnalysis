@@ -50,12 +50,13 @@ void wprime(int Sampletype, int irun = 0) {
   // if (CreateProbability) return;
   // ofstream &logfile = a->logfile;
   // TFile* PFile= a->PFile;
-  bool debug = false;
+  bool debug = true;
   if (debug) {
-    a->SetStartEntry(0);
-    a->ProcessEntries(5000);
+    a->SetStartEntry(1000);
+    a->ProcessEntries(1000);
   }
-  TH2F* JetMatches = new TH2F("JetMatches","JetMatches;NoMatch,PartGenMatch,GenGenJetMatch; Entries/100",3,-0.5,2.5,80,-0.5,79.5);
+  TH2F* JetMatch = new TH2F("JetMatch","JetMatches;NoMatch,PartGenMatch,GenGenJetMatch; Entries/100",3,-0.5,2.5,80,-0.5,79.5);
+  TH2F* JetMatch2 = new TH2F("JetMatch2","JetMatches;NoMatch,PartGenMatch,GenGenJetMatch; Entries/100",3,-0.5,2.5,80,-0.5,79.5);
   // TH1F* PartonDeltaR = new TH1F("PartonDeltaR","Parton Delta R; Delta R; Percentage",1000,0.,100.);
 
   // Long64_t StartEntry = a->GetStartEntry();
@@ -72,19 +73,21 @@ void wprime(int Sampletype, int irun = 0) {
     for (unsigned i = 0; i < a->LVOutPart.size(); ++i) {
       it1 = a->OutPartGenJetMap.find(i);
       if (it1 == a->OutPartGenJetMap.end() ) {
-        JetMatches->Fill(0.,fff);
+        JetMatch->Fill(0.,fff);
       }
       else {
         it2 = a->GenJetJetMap.find(it1->second);
         if (it2 == a->GenJetJetMap.end() ) {
-          JetMatches->Fill(1.,fff);
+          JetMatch->Fill(1.,fff);
         }
         else {
-          JetMatches->Fill(2.,fff);
+          JetMatch->Fill(2.,fff);
         }
       }
     }
-
+    for (unsigned i = 0; i < (a->LVOutPart.size() - a->OutPartGenJetMap.size() ) ; ++i){
+      JetMatch2->Fill(0.,fff);
+    }
     // vector<TLorentzVector> out = a->LVOutPart;
     // for (unsigned iout = 0; iout < out.size(); ++iout) {
     //   for (unsigned iout2 = 0; iout2 < out.size(); ++iout2) {

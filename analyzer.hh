@@ -75,6 +75,7 @@ public:
 
   TLorentzVector RecoParticle(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double target, int &p1, int &p2);
   map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true);
+  map<int,int> JetMatch2(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true);
   void GetProbability(bool ForceRecreate = false);
   void CreateProbability(TString pfilename);
   double Optimize();
@@ -93,7 +94,7 @@ public:
   vector<Electron*> Electrons;
   vector<Muon*> Muons;
   MissingET* MET;
-  vector<int> GenD, GenU, GenS, GenC, GenB, GenT, GenE, GenNuE, GenMu, GenNuMu, GenTau, GenG, GenGamma, GenW, GenWP, GenOut, GenOutSort;
+  vector<int> GenD, GenU, GenS, GenC, GenB, GenT, GenE, GenNuE, GenMu, GenNuMu, GenTau, GenG, GenGamma, GenW, GenWP, GenOut, GenOut21, GenOutSort;
   vector<TLorentzVector> LVAllJets, LVJets, LVBJets, LVNBJets, LVElectrons, LVMuons, LVLeptons, LVSoftLep, LVOutPart, LVGenJets; //These are all reconstructed TLorentzVectors.
   TLorentzVector LVMET;
 
@@ -102,8 +103,8 @@ public:
   TLorentzVector LVWP, LVGenWPB, LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtW, LVGenOtT, LVGenOtB, LVGenLep, LVGenNeu, LVGenWPTWJ1, LVGenWPTWJ2;
   vector<TLorentzVector> LVGenWPTWJ, LVGenOutSort, LVJetSort;
   vector<int> GenWPTWJ;
-  map<int,int> AllJetMatchMap, OutJetMatchMap, GenJetJetMap, OutPartGenJetMap, OptiJetMatchMap;
-  double AllJetMatchMaxDeltaR, OutJetMatchDeltaR, GenJetJetMapDeltaR, OutPartGenJetMapDeltaR;
+  map<int,int> OutJetMatchMap, GenJetJetMap, OutPartGenJetMap, OptiJetMatchMap;
+  double JESMatchMaxDeltaR, OutJetMatchDeltaR, GenJetJetMapDeltaR, OutPartGenJetMapDeltaR;
 
   //The probability calculations
   TFile* PFile;
@@ -131,7 +132,7 @@ private:
   TChain* chain_;
   TString OutputName, OutputLogName, UsePFilename, UsePFilefolder;
   Long64_t nEntries, iEntry, StartEntry, EndEntry;
-  double JetPtThreshold;
+  double JetPtThreshold, AlgodR;
   bool verbose;
   int JetPtCutOff, JetNumberCutoff, irun;
 };

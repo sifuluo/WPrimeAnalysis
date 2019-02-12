@@ -22,6 +22,7 @@ Analyzer::Analyzer(vector<TString> basepaths, vector<TString> inputfolders, int 
   StartEntry = 0;
   EndEntry = nEntries;
   JetPtThreshold = pt;
+  AlgodR = 0.25;
 
   double etaarr[] = {0.,1.3,2.5,3.0,5.2};
   etabins.clear();
@@ -115,7 +116,6 @@ int Analyzer::ReadEvent(Int_t ievt, bool debug) {
 
 void Analyzer::GetInfos() {
   SortInitialize();
-
   for (int iGen = 0; iGen < branchGen->GetEntries(); ++iGen){
     GenParticle* genp = (GenParticle*) branchGen->At(iGen);
     GenParticles.push_back(genp);
@@ -149,13 +149,15 @@ void Analyzer::GetInfos() {
   for (unsigned ihad = 0; ihad < GenOut.size(); ++ihad) {
     LVOutPart.push_back(GenParticles[ToBeHadron(GenOut[ihad])]->P4());
   }
-  AllJetMatchMap = JetMatch(LVOutPart, LVJets, AllJetMatchMaxDeltaR, false);
+  for (unsigned igl = 0; igl < GenOut21.size(); ++igl) {
+    LVOutPart.push_back(GenParticles[ToBeHadron(GenOut21[igl])]->P4());
+  }
 
   for (int it = 0; it < branchMuon->GetEntries(); ++it) {
     Muon* mu = (Muon*) branchMuon->At(it);
     Muons.push_back(mu);
     LVMuons.push_back(mu->P4());
-    if (mu->IsolationVar > 0.2 || mu->PT < 30) {
+    if (mu->IsolationVar > AlgodR || mu->PT < 30) {
       LVSoftLep.push_back(mu->P4());
       continue;
     }
@@ -166,7 +168,7 @@ void Analyzer::GetInfos() {
     Electron* e = (Electron*) branchElectron->At(it);
     Electrons.push_back(e);
     LVElectrons.push_back(e->P4());
-    if (e->IsolationVar > 0.2 || e->PT < 30) {
+    if (e->IsolationVar > AlgodR || e->PT < 30) {
       LVSoftLep.push_back(e->P4());
       continue;
     }
@@ -180,17 +182,37 @@ void Analyzer::GetInfos() {
 
 
 void Analyzer::MakeMatchMaps() {
+  bool testmodule = false;
+  if (testmodule){
+    for (int istar = 0; istar < 20 ; ++istar) {
+      cout <<"**";
+    }
+    cout <<endl;
+  }
   // logfile << Form("Event: %d\n",iEntry);
-  OutPartGenJetMap = JetMatch(LVOutPart,LVGenJets,OutPartGenJetMapDeltaR, true);
+  // if (testmodule) cout << Form("\nV1: GenOut, %d; V2: GenJets, %d\n", (int)LVOutPart.size(), (int)LVGenJets.size());
+  // map<int,int> map1 = JetMatch(LVOutPart,LVGenJets,OutPartGenJetMapDeltaR, true);
+  // cout << endl<< "New Algorithm" <<endl;
+  // map<int,int> map2 = JetMatch2(LVOutPart,LVGenJets,OutPartGenJetMapDeltaR, true);
+  // if (map1!=map2) cout << "Different result at entry: " <<iEntry<<endl;
+  // OutPartGenJetMap = JetMatch(LVOutPart,LVGenJets,OutPartGenJetMapDeltaR, true);
+  // if (testmodule)cout <<endl<<"New algorithm"<<endl;
+  OutPartGenJetMap = JetMatch2(LVOutPart,LVGenJets,OutPartGenJetMapDeltaR, true);
   // logfile << Form("OutPart Size = %d, GenJet size = %d, OutPartGen Size = %d, MaxDR = %f\n",LVOutPart.size(), LVGenJets.size(), OutPartGenJetMap.size(),OutPartGenJetMapDeltaR);
+
+  // if (testmodule) cout << Form("\nV1: GenJets, %d; V2: Jets, %d\n",(int)LVGenJets.size(), (int)LVJets.size());
   GenJetJetMap = JetMatch(LVGenJets,LVJets,GenJetJetMapDeltaR,true);
   // logfile << Form("GenJet Size = %d, Jet Size = %d, GenJetJet Size = %d, MaxDR = %f\n",LVGenJets.size(), LVJets.size(), GenJetJetMap.size(),GenJetJetMapDeltaR);
+
+  if (testmodule) cout <<endl<<endl;
   // logfile <<Form("c1 = %d, c2 = %d, c3 = %d \n", c1, c2,c3);
 }
 
 void Analyzer::SortInitialize() {
   GenParticles.clear();
+  GenJets.clear();
   Jets.clear();
+  AllJets.clear();
   Muons.clear();
   Electrons.clear();
   BTags.clear();
@@ -213,9 +235,12 @@ void Analyzer::SortInitialize() {
   GenW.clear();
   GenWP.clear();
   GenOut.clear();
+  GenOut21.clear();
   GenOutSort.clear();
   LVGenWPTWJ.clear();
 
+  LVAllJets.clear();
+  LVGenJets.clear();
   LVJets.clear();
   LVBJets.clear();
   LVNBJets.clear();
@@ -225,7 +250,6 @@ void Analyzer::SortInitialize() {
   LVSoftLep.clear();
   LVOutPart.clear();
   LVGenOutSort.clear();
-  AllJetMatchMap.clear();
   // OutJetMatchMap.clear();
   // LVJetSort.clear();
 }
@@ -252,8 +276,13 @@ void Analyzer::SortGenParticle() {
       // else if (pid == 22) GenGamma.push_back(igen);
       else if (pid == 24) GenW.push_back(igen);
       else if (pid == 34) GenWP.push_back(igen);
-      if ( (genp->Status == 23 || genp->Status ==24) &&  pid< 7 /*&& genp->PT > 20. && fabs(genp->Eta) < 5.*/) {
-        GenOut.push_back(igen);
+      if ( (genp->Status == 23 || genp->Status ==24) ) {
+        if (pid <7 ) {
+          GenOut.push_back(igen);
+        }
+        if (pid == 21) {
+          GenOut21.push_back(igen);
+        }
       }
     }
   }
@@ -504,16 +533,23 @@ TLorentzVector Analyzer::RecoParticle(vector<TLorentzVector> &v1, vector<TLorent
   return out;
 }
 
-map<int,int> Analyzer::JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut) {
+map<int,int> Analyzer::JetMatch2(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut) {
+  bool testmodule = false;
   map<int,int> out;
   vector< vector<double> > deltaRs;
+  if (testmodule) cout << endl<< " X: V2s ; Y: V1s " <<endl;
   for (unsigned iv1 = 0; iv1 < v1.size(); ++iv1) {
     vector<double> v2p;
+    if (testmodule) cout << "|";
     for (unsigned iv2 = 0; iv2 < v2.size(); ++iv2) {
-      v2p.push_back(v1[iv1].DeltaR(v2[iv2]));
+      double dr12 = v1[iv1].DeltaR(v2[iv2]);
+      v2p.push_back(dr12);
+      if (testmodule) cout << Form(" %5.3f |",dr12);
     }
+    if (testmodule) cout <<endl;
     deltaRs.push_back(v2p);
   }
+  if (testmodule) cout <<endl;
   int x = min(v1.size(), v2.size());
   for (int it = 0; it < x; ++it) {
     int minv1(0), minv2(0);
@@ -527,15 +563,156 @@ map<int,int> Analyzer::JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVecto
         }
       }
     }
-    if (cut && minR > 0.2) break;
+    if (testmodule) {
+      cout << Form("V1:%d, V2:%d: dR: %5.3f",minv1,minv2,minR) << endl;
+    }
+    if (cut && minR > AlgodR) {
+      if (testmodule) cout <<Form("******Cut at minR = %5.3f",minR) << endl;
+      break;
+    }
     if (it > x - 2) maxDeltaR = minR;
     for (unsigned iv1 = 0; iv1 < v1.size(); ++iv1) deltaRs[iv1][minv2] = 1000;
     for (unsigned iv2 = 0; iv2 < v2.size(); ++iv2) deltaRs[minv1][iv2] = 1000;
     out.insert(pair<int, int>(minv1, minv2));
+    if (testmodule) cout << Form("Map inserted: %d, %d\n",pair<int,int>(minv1,minv2).first,pair<int,int>(minv1,minv2).second);
+  }
+  return out;
+}
+map<int,int> Analyzer::JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut) {
+  bool testmodule = false;
+  vector<int> l1, l2;
+  for (unsigned il = 0; il < v1.size(); ++il) {
+    l1.push_back((int)il);
+  }
+  for (unsigned il = 0; il < v2.size(); ++il) {
+    l2.push_back((int)il);
+  }
+  map<int,int> out;
+  vector< vector<double> > deltaRs;
+  if (testmodule) cout << endl<< " X: V2s ; Y: V1s " <<endl;
+  for (unsigned iv1 = 0; iv1 < v1.size(); ++iv1) {
+    vector<double> v2p;
+    if (testmodule) cout << "|";
+    for (unsigned iv2 = 0; iv2 < v2.size(); ++iv2) {
+      double dr12 = v1[iv1].DeltaR(v2[iv2]);
+      v2p.push_back(dr12);
+      if (testmodule) cout << Form(" %5.3f |",dr12);
+    }
+    if (testmodule) cout <<endl;
+    deltaRs.push_back(v2p);
+  }
+  if (testmodule) cout <<endl;
+  int x = min(v1.size(), v2.size());
+  for (int it = 0; it < x; ++it) {
+    int minv1(l1[0]), minv2(l2[0]);
+    int dl1(0),dl2(0);
+    double minR = deltaRs[minv1][minv2];
+    for (unsigned il1 = 0;il1 < l1.size(); ++il1) {
+      for (unsigned il2 = 0; il2 < l2.size(); ++il2) {
+        int iv1 = l1[il1];
+        int iv2 = l2[il2];
+        if (deltaRs[iv1][iv2] < minR) {
+          minR = deltaRs[iv1][iv2];
+          minv1 = iv1;
+          minv2 = iv2;
+          dl1 = il1;
+          dl2 = il2;
+        }
+      }
+    }
+    if (testmodule) {
+      cout << Form("V1:%d, V2:%d: dR: %5.3f",minv1,minv2,minR) << endl;
+    }
+    if (cut && minR > AlgodR) {
+      if (testmodule) cout <<Form("******Cut at minR = %5.3f",minR) << endl;
+      break;
+    }
+    if (it > x - 2) maxDeltaR = minR;
+    l1.erase(l1.begin()+dl1);
+    l2.erase(l2.begin()+dl2);
+
+    out.insert(pair<int, int>(minv1, minv2));
+    if (testmodule) cout << Form("Map inserted: %d, %d\n",pair<int,int>(minv1,minv2).first,pair<int,int>(minv1,minv2).second);
   }
   return out;
 }
 
+/*
+map<int,int> Analyzer::JetMatch2(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut) {
+  bool testmodule = false;
+  vector<int> l1, l2;
+  for (unsigned il = 0; il < v1.size(); ++il) {
+    l1.push_back((int)il);
+  }
+  for (unsigned il = 0; il < v2.size(); ++il) {
+    l2.push_back((int)il);
+  }
+  map<int,int> out;
+  vector< vector<double> > deltaRs;
+  if (testmodule) cout << endl<< " X: V2s ; Y: V1s " <<endl;
+  for (unsigned iv1 = 0; iv1 < v1.size(); ++iv1) {
+    vector<double> v2p;
+    if (testmodule) cout << "|";
+    for (unsigned iv2 = 0; iv2 < v2.size(); ++iv2) {
+      double dr12 = v1[iv1].DeltaR(v2[iv2]);
+      v2p.push_back(dr12);
+      if (testmodule) cout << Form(" %5.3f |",dr12);
+    }
+    if (testmodule) cout <<endl;
+    deltaRs.push_back(v2p);
+  }
+  if (testmodule) cout <<endl;
+  int x = min(v1.size(), v2.size());
+  for (int it = 0; it < x; ++it) {
+    int minv1(l1[0]), minv2(l2[0]);
+    int dv1(0),dv2(0);
+    double minR = deltaRs[0][0];
+    for (unsigned iv1 = 0;iv1 < l1.size(); ++iv1) {
+      for (unsigned iv2 = 0; iv2 < l2.size(); ++iv2) {
+        if (deltaRs[iv1][iv2] < minR) {
+          minR = deltaRs[iv1][iv2];
+          minv1 = l1[iv1];
+          minv2 = l2[iv2];
+          dv1 = iv1;
+          dv2 = iv2;
+        }
+      }
+    }
+    if (testmodule) {
+      cout << Form("\nV1:%d, V2:%d: dR: %5.3f",minv1,minv2,minR) << endl;
+    }
+    if (cut && minR > AlgodR) {
+      if (testmodule) cout <<Form("******Cut at minR = %5.3f",minR) << endl;
+      break;
+    }
+    if (it > x - 2) maxDeltaR = minR;
+    l1.erase(l1.begin()+dv1);
+    l2.erase(l2.begin()+dv2);
+
+    deltaRs.erase(deltaRs.begin()+dv1);
+    for (unsigned ddv2 = 0; ddv2 < l1.size(); ++ddv2) (deltaRs.at(ddv2)).erase((deltaRs.at(ddv2)).begin()+dv2);
+    if (testmodule) {
+      for (unsigned iv1 = 0; iv1 < l1.size(); ++iv1) {
+        if (iv1==0) {
+          cout << "|   |";
+          for (unsigned iv2 = 0; iv2 < l2.size(); ++iv2) {
+            cout << Form(" %5d |",l2[iv2]);
+          }
+          cout <<endl;
+        }
+        cout << Form("|%3d|",l1[iv1]);
+        for (unsigned iv2 = 0; iv2 < l2.size(); ++iv2) {
+          cout << Form(" %5.3f |",deltaRs.at(iv1).at(iv2));
+        }
+        cout <<endl;
+      }
+    }
+    out.insert(pair<int, int>(minv1, minv2));
+    if (testmodule) cout << Form("Map inserted: %d, %d\n",pair<int,int>(minv1,minv2).first,pair<int,int>(minv1,minv2).second);
+  }
+  return out;
+}
+*/
 void Analyzer::GetProbability(bool ForceRecreate) {
   TString pfilename = OutputName+"_Probability.root";
   // if (!fileexists(pfilename) || ForceRecreate) CreateProbability(pfilename);
@@ -600,7 +777,7 @@ void Analyzer::CreateProbability(TString pfilename) {
     if (ReadEvent(ievt,false) == -1) continue;
     // AssignGenParticles();
     //Jet Resolution;
-    map<int,int> match = AllJetMatchMap;
+    map<int,int> match = JetMatch(LVOutPart, LVJets, JESMatchMaxDeltaR, false);
     for (map<int,int>::iterator it = match.begin(); it != match.end(); ++it) {
       TLorentzVector LVGen, LVReco;
       LVGen = LVOutPart[it->first];
