@@ -22,10 +22,10 @@
 
 using namespace std;
 
-void wprime(int Sampletype, int irun = 0) {
+void wprime(int Sampletype, int irun = 0, int debug = -2) {
   // gSystem->Load("libDelphes");
   vector<TString> samplebasepaths;
-  samplebasepaths.push_back("/fdata/hepx/store/user/aoverton0342/madGraph/");
+  samplebasepaths.push_back("/fdata/hepx/store/user/aoverton0342/madGraph/ak4/");
 
   vector<TString> folders;
   TString savepath = "/fdata/hepx/store/user/siluo/wprime/results/";
@@ -39,7 +39,7 @@ void wprime(int Sampletype, int irun = 0) {
     savename = "TDual_LatterLeptonic_Optimized";
   }
   else {
-    folders.push_back("ttbar2/");
+    folders.push_back("ttbar/");
     savename = "Background";
   }
 
@@ -50,13 +50,15 @@ void wprime(int Sampletype, int irun = 0) {
   // if (CreateProbability) return;
   // ofstream &logfile = a->logfile;
   // TFile* PFile= a->PFile;
-  bool debug = true;
-  if (debug) {
-    a->SetStartEntry(1000);
+  if (debug == -1) {
+    a->SetStartEntry(0);
     a->ProcessEntries(1000);
   }
-  TH2F* JetMatch = new TH2F("JetMatch","JetMatches;NoMatch,PartGenMatch,GenGenJetMatch; Entries/100",3,-0.5,2.5,80,-0.5,79.5);
-  TH2F* JetMatch2 = new TH2F("JetMatch2","JetMatches;NoMatch,PartGenMatch,GenGenJetMatch; Entries/100",3,-0.5,2.5,80,-0.5,79.5);
+  else if (debug > -1){
+    a->SetStartEntry(debug);
+    a->ProcessEntries(1);
+  }
+  // TH2F* JetMatch = new TH2F("JetMatch","JetMatches;NoMatch,PartGenMatch,GenGenJetMatch; Entries/100",3,-0.5,2.5,80,-0.5,79.5);
   // TH1F* PartonDeltaR = new TH1F("PartonDeltaR","Parton Delta R; Delta R; Percentage",1000,0.,100.);
 
   // Long64_t StartEntry = a->GetStartEntry();
@@ -66,6 +68,7 @@ void wprime(int Sampletype, int irun = 0) {
     if (a->ReadEvent(entry,debug) == -2) continue;
     // a->AssignGenParticles();
     a->MakeMatchMaps();
+    /*
     double fff = floor(entry/100);
 
     map<int,int>::iterator it1, it2;
@@ -85,17 +88,7 @@ void wprime(int Sampletype, int irun = 0) {
         }
       }
     }
-    for (unsigned i = 0; i < (a->LVOutPart.size() - a->OutPartGenJetMap.size() ) ; ++i){
-      JetMatch2->Fill(0.,fff);
-    }
-    // vector<TLorentzVector> out = a->LVOutPart;
-    // for (unsigned iout = 0; iout < out.size(); ++iout) {
-    //   for (unsigned iout2 = 0; iout2 < out.size(); ++iout2) {
-    //     if (iout2 == iout) continue;
-    //     PartonDeltaR->Fill(out[iout].DeltaR(out[iout2]));
-    //   }
-    // }
-
+    */
   }//Looped over all entries
 
   // JetMatches->Scale(1./JetMatches->GetEntries());

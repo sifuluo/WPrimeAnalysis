@@ -74,8 +74,10 @@ public:
   Electron* GetElectron(int ie);
 
   TLorentzVector RecoParticle(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double target, int &p1, int &p2);
-  map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true);
+  map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true, bool FilterSoft = false);
   map<int,int> JetMatch2(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true);
+  pair<int,int> FindMatrixMin( vector<vector<double> > &matrix, vector<int> &list1, vector<int> &list2, double &MatrixMin);
+  map< int, vector<int> > AdvJetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true, bool FilterSoft = false);
   void GetProbability(bool ForceRecreate = false);
   void CreateProbability(TString pfilename);
   double Optimize();

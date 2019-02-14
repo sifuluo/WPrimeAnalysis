@@ -1,6 +1,6 @@
 import os
 
-basepath = "/fdata/hepx/store/user/aoverton0342/madGraph/"
+basepath = "/fdata/hepx/store/user/aoverton0342/madGraph/ak4/"
 # folders = "TDual_FormerLeptonic/"
 Sampletype = 2
 # 0 for TDual_FormerLeptonic
@@ -12,7 +12,7 @@ if Sampletype == 0:
 elif Sampletype == 1:
   Samplename = "TDual_LatterLeptonic"
 else:
-  Samplename = "ttbar2"
+  Samplename = "ttbar"
 
 basepath = basepath + Samplename + "/Events/"
 
