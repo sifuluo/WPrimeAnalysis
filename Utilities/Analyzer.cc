@@ -27,7 +27,7 @@ Analyzer::Analyzer(int SampleType_, int irun_, double pt = 30) {
   debug = -2;
   RecoPass = 0;
   GenPass = 0;
-}
+};
 
 void Analyzer::SetStartEntry(int startentry){
   StartEntry = startentry;
@@ -39,7 +39,7 @@ void Analyzer::SetStartEntry(int startentry){
     cout << "StartEntry Cannot be set to negative. StartEntry is set to 0." <<endl;
     StartEntry = 0;
   }
-}
+};
 
 void Analyzer::ProcessEntries(int nprocess){
   if (nprocess > 0) EndEntry = StartEntry + nprocess;
@@ -47,7 +47,7 @@ void Analyzer::ProcessEntries(int nprocess){
     cout << "Too many ProcessEntries. EndEntry is set to end of sample." << endl;
     EndEntry = nEntries;
   }
-}
+};
 
 void Analyzer::SetEndEntry(int endentry) {
   EndEntry = endentry;

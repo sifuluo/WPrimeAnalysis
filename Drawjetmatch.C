@@ -1,9 +1,9 @@
 {
   gROOT->SetBatch();
   gStyle->SetOptStat(0);
-  TFile *fFL = new TFile("results/MatchTest_FL.root");
-  TFile *fLL = new TFile("results/MatchTest_LL.root");
-  TFile *fBG = new TFile("results/MatchTest_BG.root");
+  TFile *fFL = new TFile("results/MatchTest_FL1.root");
+  TFile *fLL = new TFile("results/MatchTest_LL1.root");
+  TFile *fBG = new TFile("results/MatchTest_BG1.root");
 
   TCanvas *cJetMatchRatio = new TCanvas("cJetMatchRatio","JetMatchRatio",800,500);
   TH1F* JetMatchRatioFL = (TH1F*)fFL->Get("JetMatchRatio");
@@ -150,6 +150,26 @@
   lLeptonResolution->Draw();
   cLeptonResolution->Draw();
   cLeptonResolution->SaveAs("plots/MatchTest/LeptonResolution.pdf");
+
+  TCanvas *cLowerMergedJets = new TCanvas("cLowerMergedJets","cLowerMergedJets",800,500);
+  TH2F* LowerMergedJetsFL = (TH2F*)fFL->Get("LowerMergedJets");
+  TH2F* LowerMergedJetsLL = (TH2F*)fLL->Get("LowerMergedJets");
+  TH2F* LowerMergedJetsBG = (TH2F*)fBG->Get("LowerMergedJets");
+  LowerMergedJetsFL->Add(LowerMergedJetsLL);
+  LowerMergedJetsFL->Add(LowerMergedJetsBG);
+  LowerMergedJetsFL->GetXaxis()->SetRangeUser(0,200);
+  LowerMergedJetsFL->Draw("colz");
+  cLowerMergedJets->SaveAs("plots/MatchTest/LowerMergedJets.pdf");
+
+  TCanvas *cHigherMergedJets = new TCanvas("cHigherMergedJets","cHigherMergedJets",800,500);
+  TH2F* HigherMergedJetsFL = (TH2F*)fFL->Get("HigherMergedJets");
+  TH2F* HigherMergedJetsLL = (TH2F*)fLL->Get("HigherMergedJets");
+  TH2F* HigherMergedJetsBG = (TH2F*)fBG->Get("HigherMergedJets");
+  HigherMergedJetsFL->Add(HigherMergedJetsLL);
+  HigherMergedJetsFL->Add(HigherMergedJetsBG);
+  HigherMergedJetsFL->GetXaxis()->SetRangeUser(0,200);
+  HigherMergedJetsFL->Draw("colz");
+  cHigherMergedJets->SaveAs("plots/MatchTest/HigherMergedJets.pdf");
 
   // TCanvas *cNBJetsVsBJetsFL = new TCanvas("cNBJetsVsBJetsFL","## of b-jet VS non-b-jet (FL)",800,500);
   // TH2F* NBJetsVsBJetsFL = (TH2F*)fFL->Get("NBJetsVsBJets");

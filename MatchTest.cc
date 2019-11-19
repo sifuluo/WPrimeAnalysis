@@ -39,8 +39,8 @@ void MatchTest(int SampleType = 0, int irun = 1, int debug = -2) {
   TH2F* NoAdvMatchParPtVsMinDr = new TH2F("NoAdvMatchParPtVsMinDr","Particle Attr. has no Match in Advanced Match;Pt;Min#Delta R with other Parton",100,0.,500., 60,0.,6.);
   TH1F* LeptonResolution = new TH1F("LeptonResolution", "Lepton Resoluiton; Lepton Pt/ GenLepton Pt", 600,0.,6.);
 
-  TH2F* LowerMergedJets = new TH2F("LowerMergedJets", "Merged Jets of lower Pt Attr. ; Pt ; DeltaR",600,0.,6.,60,0.,6.);
-  TH2F* HigherMergedJets = new TH2F("HigherMergedJets", "Merged Jets of higher Pt Attr. ; Pt ; DeltaR",600,0.,6.,60,0.,6.);
+  TH2F* LowerMergedJets = new TH2F("LowerMergedJets", "Merged Jets of lower Pt Attr. ; Pt ; DeltaR",600,0.,600.,60,0.,6.);
+  TH2F* HigherMergedJets = new TH2F("HigherMergedJets", "Merged Jets of higher Pt Attr. ; Pt ; DeltaR",600,0.,600.,60,0.,6.);
   // Missing plots are:
   //Lost match in Merged Jets.
   //Additional Jets in Merged Jets
