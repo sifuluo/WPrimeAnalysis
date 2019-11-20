@@ -12,19 +12,14 @@ public:
 
   const vector<double> etabins{0., 1.3, 2.5, 3.0, 5.2};
 
-  // const vector<vector<double> > ptbins{
-  //   {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,130., 150.,180.,220., 260., 300.,350.,400.,500.,1000.,6000.},
-  //   {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150., 180.,220.,260., 300.,6000.,   0,   0,   0,    0,    0},
-  //   {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150., 180.,220.,260.,6000.,    0,   0,   0,   0,    0,    0},
-  //   {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150.,6000.,   0,   0,    0,    0,   0,   0,   0,    0,    0}
-  // };
-
   const vector<vector<double> > ptbins{
     {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,130., 150.,180.,220., 260., 300.,350.,400.,500.,1000.,6000.},
     {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150., 180.,220.,260., 300.,6000.},
     {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150., 180.,220.,260.,6000.},
     {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150.,6000.}
   };
+
+  vector< vector<TH1F*> > JESVector;
 
   vector<double> EtaBins(){
     return etabins;
@@ -82,6 +77,45 @@ public:
     }
 
     return pair<int,int>(iEta, iPt);
+  }
+
+  vector< vector<TH1F*> > MakeJES(){
+    vector<vector <TH1F*> > jes;
+    jes.clear();
+    for (unsigned ieta = 0; ieta < EtaBins().size()-1; ++ieta) {
+      vector<TH1F*> jeseta;
+      jeseta.clear();
+      for (unsigned ipt = 0; ipt < PtBins(ieta).size() -1; ++ipt){
+        TString sn = Form("eta%d_pt%d", ieta, ipt);
+        TString st = Form("eta%.1fto%.1f_pt%dto%d",EtaBinLow(ieta),EtaBinHigh(ieta), int(PtBinLow(ieta,ipt)), int(PtBinHigh(ieta, ipt)) );
+        jeseta.push_back(new TH1F(sn,st,600,0,6));
+      }
+      jes.push_back(jeseta);
+    }
+    JESVector = jes;
+    return jes;
+  }
+
+  vector< vector<TH1F*> > ReadJES(TFile* f) {
+    vector< vector<TH1F*> > jes;
+    jes.clear();
+    for (unsigned ieta = 0; ieta < EtaBins().size()-1; ++ieta) {
+      vector<TH1F*> jeseta;
+      jeseta.clear();
+      for (unsigned ipt = 0; ipt < PtBins(ieta).size() -1; ++ipt){
+        TString sn = Form("eta%d_pt%d", ieta, ipt);
+        jeseta.push_back( (TH1F*)(f->Get(sn))); //Histogram might not be accessible after TFile being closed
+        // TH1F hjes = *((TH1F*)(f->Get(sn)));
+        // jeseta.push_back(&hjes);
+      }
+      jes.push_back(jeseta);
+    }
+    JESVector = jes;
+    return jes;
+  }
+
+  TH1F* GetPlot(double eta_, double pt_) {
+    return JESVector.at(iBin(eta_, pt_).first).at(iBin(eta_,pt_).second);
   }
 
 };

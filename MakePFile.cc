@@ -1,5 +1,6 @@
 #include "Utilities/Analyzer.cc"
 #include "Utilities/JetMatch.cc"
+#include "Utilities/EtaPtBins.cc"
 
 #include <TROOT.h>
 #include <TClonesArray.h>
@@ -10,6 +11,7 @@
 #include <TProfile.h>
 #include <TProfile2D.h>
 #include <TEfficiency.h>
+#include <TString.h>
 
 #include <vector>
 #include <iostream>
@@ -23,19 +25,34 @@ using namespace std;
 
 void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
   Analyzer *a = new Analyzer(SampleType, irun, 30);
+  EtaPtBins *b = new EtaPtBins();
   TString savepath = "PFile/";
   TString savename = "PFile";
-  a->SetOutput(savepath);
+  a->SetOutput(savepath,savename);
   a->DebugMode(debug);
 
-  vector<double> etabins{0., 1.3, 2.5, 3.0, 5.2};
-  vector<vector<double> > ptbins{
-    {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,130.,150.,180.,220.,260.,300.,350.,400.,500.,1000.,6000.},
-    {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150.,180.,220.,260.,300.,6000.,0,0,0,0,0},
-    {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150.,180.,220.,260.,6000.,0,0,0,0,0,0},
-    {30.,32.,34.,37.,40.,45.,50.,57.,65.,75.,90.,110.,150.,6000.,0,0,0,0,0,0,0,0,0}
-  };
+  TProfile2D *pJetProfile = new TProfile2D("pJetProfile2D","Jet Response TProfile2D; recoPt; recoEta", 600, 0, 300, 60, 0, 6.0);
+  b->MakeJES();
+  b->GetPlot(1.0,40.)->Fill(2);
 
-  vector<vector <TH1F*> > pJet;
+  for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
+    a->ReadEvent(entry);
+    a->AssignGenParticles();
+    a->MatchJets();
+
+    for (auto mapit = a->JetMatchMap.begin(); mapit != a->JetMatchMap.end(); ++mapit) {
+      TLorentzVector lvgen = a->LVOutPart.at((*mapit).first);
+      TLorentzVector lvjet;
+      int j1 = (*mapit).second.at(0);
+      int j2 = (*mapit).second.at(1);
+      if (j1 == j2) lvjet = a->LVJets.at(j1);
+      else lvjet = a->LVJets.at(j1) + a->LVJets.at(j2);
+      b->GetPlot(lvjet.Eta(), lvjet.Pt())->Fill(lvgen.Pt() / lvjet.Pt());
+      pJetProfile->Fill(lvjet.Pt(),lvjet.Eta(),lvgen.Pt() / lvjet.Pt());
+    }
+
+  }
+
+  a->SaveOutput();
 
 }

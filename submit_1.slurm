@@ -5,7 +5,7 @@
 #SBATCH -n1
 #SBATCH --mem-per-cpu=4000
 #SBATCH -a 1-20
-#SBATCH -o slurmlog/TDual_LatterLeptonic_log_%A-%a.out
+#SBATCH -o slurmlog/Log_LL_%A-%a.out
 
 echo "starting at `date` on `hostname`"
 
@@ -16,7 +16,8 @@ echo "SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID" #the index within in a job
 
 # root -l -b "wprime.cpp+(isample,$SLURM_ARRAY_TASK_ID)"
 # root -l -b "hypothesis.cc+(1,$SLURM_ARRAY_TASK_ID)"
-root -l -b "MatchTest.cc+(1,$SLURM_ARRAY_TASK_ID)"
+# root -l -b "MatchTest.cc+(1,$SLURM_ARRAY_TASK_ID)"
+root -l -b "MakePFile.cc+(1,$SLURM_ARRAY_TASK_ID)"
 
 echo "ended at `date` on `hostname`"
 exit 0
