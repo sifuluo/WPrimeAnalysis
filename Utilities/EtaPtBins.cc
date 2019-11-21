@@ -87,7 +87,7 @@ public:
       jeseta.clear();
       for (unsigned ipt = 0; ipt < PtBins(ieta).size() -1; ++ipt){
         TString sn = Form("eta%d_pt%d", ieta, ipt);
-        TString st = Form("eta%.1fto%.1f_pt%dto%d",EtaBinLow(ieta),EtaBinHigh(ieta), int(PtBinLow(ieta,ipt)), int(PtBinHigh(ieta, ipt)) );
+        TString st = Form("eta%.1fto%.1f_pt%dto%d;Pt_{Gen}/Pt_{Reco}",EtaBinLow(ieta),EtaBinHigh(ieta), int(PtBinLow(ieta,ipt)), int(PtBinHigh(ieta, ipt)) );
         jeseta.push_back(new TH1F(sn,st,600,0,6));
       }
       jes.push_back(jeseta);

@@ -37,7 +37,7 @@ void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
 
   for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
     a->ReadEvent(entry);
-    a->AssignGenParticles();
+    // a->AssignGenParticles();
     a->MatchJets();
 
     for (auto mapit = a->JetMatchMap.begin(); mapit != a->JetMatchMap.end(); ++mapit) {
