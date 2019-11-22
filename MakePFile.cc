@@ -31,10 +31,16 @@ void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
   a->SetOutput(savepath,savename);
   a->DebugMode(debug);
 
-  TProfile2D *pJetProfile = new TProfile2D("pJetProfile2D","Jet Response TProfile2D; recoPt; recoEta", 600, 0, 300, 60, 0, 6.0);
   b->MakeJES();
-  b->GetPlot(1.0,40.)->Fill(2);
-
+  TProfile2D *pJetProfile2D = new TProfile2D("pJetProfile2D","Jet Response TProfile2D; recoPt; recoEta", 600, 0, 300, 60, 0, 6.0);
+  vector<TProfile*> pJetProfiles;
+  for (unsigned i = 0; i < b->EtaBins().size() - 1; ++i) {
+    vector<double> bins = b->PtBins(i);
+    int nb = bins.size();
+    double arr[nb];
+    copy(bins.begin(),bins.end(),arr);
+    pJetProfiles.push_back(new TProfile(Form("pJetProfile_%d",i),"Jet Response Profile; recoPt;genPt / recoPt",nb-1,arr,"S"));
+  }
   for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
     a->ReadEvent(entry);
     // a->AssignGenParticles();
@@ -47,8 +53,15 @@ void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
       int j2 = (*mapit).second.at(1);
       if (j1 == j2) lvjet = a->LVJets.at(j1);
       else lvjet = a->LVJets.at(j1) + a->LVJets.at(j2);
-      b->GetPlot(lvjet.Eta(), lvjet.Pt())->Fill(lvgen.Pt() / lvjet.Pt());
-      pJetProfile->Fill(lvjet.Pt(),lvjet.Eta(),lvgen.Pt() / lvjet.Pt());
+      double jetpt = lvjet.Pt();
+      double jeteta = lvjet.Eta();
+      if (jetpt < 30) continue;
+      b->CalcBins(jeteta,jetpt);
+      double rsp = lvgen.Pt() / jetpt;
+      b->FillPlot(rsp);
+      pJetProfile2D->Fill(jetpt,jeteta,rsp);
+      pJetProfiles[b->GetiEta()]->Fill(jetpt,rsp);
+
     }
 
   }

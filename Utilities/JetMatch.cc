@@ -78,7 +78,7 @@ map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, do
   return out;
 }
 
-map<int,vector<int> > AdvJetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut, bool FilterSoftGen, bool FilterSoft) {
+map<int,vector<int> > AdvJetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, double MergeDeltaR = 2.0, bool cut = true, bool FilterSoftGen = false, bool FilterSoft = true) {
   bool testmodule = false;
   int nl1(0), nl2(0);
   vector<int> l1, l2;
@@ -135,6 +135,10 @@ map<int,vector<int> > AdvJetMatch(vector<TLorentzVector> &v1, vector<TLorentzVec
         for (unsigned il2b = 0; il2b <= il2a; ++il2b) {
           if (l2[il2b] ==0) continue;
           if (deltaRs[il1][il2a][il2b] < minR || minR == 0) {
+            if (MergeDeltaR != 0 && il2a != il2b) {
+              double mergeR = v2[il2a].DeltaR(v2[il2b]);
+              if (mergeR > MergeDeltaR) continue;
+            }
             minR = deltaRs[il1][il2a][il2b];
             ml1 = il1;
             ml2a = il2a;

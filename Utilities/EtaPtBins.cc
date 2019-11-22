@@ -8,7 +8,11 @@ using namespace std;
 
 class EtaPtBins{
 public:
-  EtaPtBins(){};
+  EtaPtBins(){
+    // JESVector.clear();
+    // TempiEta = 0;
+    // TempiPt = 0;
+  };
 
   const vector<double> etabins{0., 1.3, 2.5, 3.0, 5.2};
 
@@ -20,6 +24,10 @@ public:
   };
 
   vector< vector<TH1F*> > JESVector;
+
+
+  pair<int,int> TempiBin;
+  int TempiEta, TempiPt;
 
   vector<double> EtaBins(){
     return etabins;
@@ -45,7 +53,7 @@ public:
     return ptbins.at(i).at(j+1);
   };
 
-  int iEta(double eta_) {
+  int CalcEtaBin(double eta_) {
     int iEta = 0;
     for (unsigned ieta = 0; ieta < (etabins.size() -1); ++ ieta ) {
       if (eta_ < etabins.at(ieta+1) ) {
@@ -57,17 +65,9 @@ public:
     return iEta;
   }
 
-  pair<int,int> iBin(double eta_, double pt_) {
-    int iEta(0), iPt(0);
-
-    for (unsigned ieta = 0; ieta < (etabins.size() -1); ++ ieta ) {
-      if (eta_ < etabins.at(ieta+1) ) {
-        iEta = ieta;
-        break;
-      }
-      if (ieta == (etabins.size() -2)) iEta = ieta;
-    }
-
+  int CalcPtBin(double eta_, double pt_) {
+    int iEta = CalcEtaBin(eta_);
+    int iPt = 0;
     for (unsigned ipt = 0; ipt < (ptbins.at(iEta).size() -1); ++ ipt ) {
       if (pt_ < ptbins.at(iEta).at(ipt+1) ) {
         iPt = ipt;
@@ -75,8 +75,37 @@ public:
       }
       if (ipt == (ptbins.at(iEta).size() -2)) iPt = ipt;
     }
+    return iPt;
+  }
 
-    return pair<int,int>(iEta, iPt);
+  void CalcBins(double eta_, double pt_) {
+    TempiEta = 0;
+    for (unsigned ieta = 0; ieta < (etabins.size() -1); ++ ieta ) {
+      if (eta_ < etabins.at(ieta+1) ) {
+        TempiEta = ieta;
+        break;
+      }
+      if (ieta == (etabins.size() -2)) TempiEta = ieta;
+    }
+    // cout <<"eta = " << eta_ << " iEta = " << TempiEta<<endl;
+    TempiPt = 0;
+    for (unsigned ipt = 0; ipt < (ptbins.at(TempiEta).size() -1); ++ ipt ) {
+      if (pt_ < ptbins.at(TempiEta).at(ipt+1) ) {
+        TempiPt = ipt;
+        break;
+      }
+      if (ipt == (ptbins.at(TempiEta).size() -2)) TempiPt = ipt;
+    }
+    // cout <<"pt = " << pt_ << " iPt = " << TempiPt<<endl;
+    TempiBin = pair<int,int>(TempiEta, TempiPt);
+  }
+
+  int GetiEta(){
+    return TempiEta;
+  }
+
+  int GetiPt(){
+    return TempiPt;
   }
 
   vector< vector<TH1F*> > MakeJES(){
@@ -105,8 +134,6 @@ public:
       for (unsigned ipt = 0; ipt < PtBins(ieta).size() -1; ++ipt){
         TString sn = Form("eta%d_pt%d", ieta, ipt);
         jeseta.push_back( (TH1F*)(f->Get(sn))); //Histogram might not be accessible after TFile being closed
-        // TH1F hjes = *((TH1F*)(f->Get(sn)));
-        // jeseta.push_back(&hjes);
       }
       jes.push_back(jeseta);
     }
@@ -114,8 +141,12 @@ public:
     return jes;
   }
 
-  TH1F* GetPlot(double eta_, double pt_) {
-    return JESVector.at(iBin(eta_, pt_).first).at(iBin(eta_,pt_).second);
+  TH1F* GetPlot() {
+    return JESVector.at(TempiEta).at(TempiPt);
+  }
+
+  void FillPlot(double fill) {
+    GetPlot()->Fill(fill);
   }
 
 };

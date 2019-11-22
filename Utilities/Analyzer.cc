@@ -538,7 +538,7 @@ void Analyzer::AssignGenParticles() {
 
 void Analyzer::MatchJets(){
   JetMatchMap.clear();
-  JetMatchMap = AdvJetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR, true, false, true);
+  JetMatchMap = AdvJetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR, 2.0, true, false, true);
   // AdvJetMatch(genLV, recoLV, max deltaR in the match, cut at larger than AlgodR = 0.2, if skip all gen LV with pt < 30, if skip all reco pt < 30)
 }
 
