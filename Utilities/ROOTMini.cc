@@ -1,7 +1,7 @@
 #ifndef ROOTMINI_CC
 #define ROOTMINI_CC
 
-#include "JESTools.hh"
+#include "JESTools.cc"
 
 #include <TLorentzVector.h>
 
@@ -48,7 +48,7 @@ public:
     }
   }
 
-  static double CalcP(double * scales) {
+  static double CalcP(const double * scales) {
     //Calculation of PScale
     double PScale = b->CalcPScales(Jets, scales);
 
@@ -58,26 +58,28 @@ public:
 
     //Solving Neutrino
     vector<TLorentzVector> Neutrinos;
-    double PNeurino = b->SolveNeutrinos(Lepton, ScaledMET, Neutrinos);
+    double PNeutrino = b->SolveNeutrinos(Lepton, ScaledMET, Neutrinos);
+
+    if (PNeutrino < 0) return PNeutrino;
 
     //Calculation of P on hadronic side
     double PHad = b->CalcPHad(ScaledJets);
 
     //Calculation of P on leptonic side
     double PLep = 0;
-    Neutrino = TLorentzVector();
+    // Neutrino = TLorentzVector();
     for (unsigned in = 0; in < Neutrinos.size(); ++in) {
       TLorentzVector NeutrinoTemp =  Neutrinos.at(in);
       double PLepTMassTemp = b->CalcPLep(ScaledJets.at(3), Lepton, NeutrinoTemp);
       if (PLepTMassTemp > PLep) {
         PLep = PLepTMassTemp;
-        Neutrino = NeutrinoTemp;
+        // Neutrino = NeutrinoTemp;
       }
     }
     // So far the P is the higher the better
 
     //Summing all and make it negative
-    double Prob = PScale * PNeutrino * PHadWMass * PHadTMass * PLepTMass * (-1.0);
+    double Prob = PScale * PHad * PLep * (-1.0);
 
     return Prob;
   }
@@ -85,13 +87,16 @@ public:
   double MinimizeP() {
     mini->Minimize();
     MinimizedScales.clear();
+    double Prob = 0;
     if (!(mini->Status())) {
-      MinimizedScalesArray = mini->X();
+      // MinimizedScalesArray = mini->X();
       for (unsigned is = 0; is < Jets.size(); ++is) {
+        MinimizedScalesArray[is] = mini->X()[is];
         MinimizedScales.push_back(mini->X()[is]);
       }
-      return (-1 * (mini->MinValue()));
+      Prob = (-1 * (mini->MinValue()));
     }
+    return Prob;
   }
 
   vector<double> GetScales() {
@@ -102,15 +107,27 @@ public:
     return b->ScaleJets(Jets, MinimizedScalesArray, LVMET, met_ );
   }
 
-  vector<double> GetPs() {
+  vector<double> GetPs(TLorentzVector &Neutrino) {
     double PScale = b->CalcPScales(Jets, MinimizedScalesArray);
 
-    TLorentzVector met_;
-    vector<TLorentzVector> ScaledJets = b->ScaleJets(Jets, MinimizedScalesArray, LVMET, met_);
-    double PHad = b->CalcPHad(ScaledJets);
-    double PLep = b->CalcPLep(ScaledJets.at(3), Lepton, Neutrino);
+    TLorentzVector ScaledMET;
+    vector<TLorentzVector> ScaledJets = b->ScaleJets(Jets, MinimizedScalesArray, LVMET, ScaledMET);
 
-    vector<double> Probs{PScale, PHad, PLep};
+    vector<TLorentzVector> Neutrinos;
+    double radical = b->SolveNeutrinos(Lepton, ScaledMET, Neutrinos);
+
+    double PHad = b->CalcPHad(ScaledJets);
+    double PLep = 0;
+    for (unsigned in = 0; in < Neutrinos.size(); ++in) {
+      TLorentzVector NeutrinoTemp =  Neutrinos.at(in);
+      double PLepTMassTemp = b->CalcPLep(ScaledJets.at(3), Lepton, NeutrinoTemp);
+      if (PLepTMassTemp > PLep) {
+        PLep = PLepTMassTemp;
+        Neutrino = NeutrinoTemp;
+      }
+    }
+
+    vector<double> Probs{PScale, PHad, PLep, radical};
 
     return Probs;
   }
@@ -119,15 +136,15 @@ private:
   static JESTools *b; // Base tool
 
   //Minimizer components
-  static ROOT::Math::Minimizer* mini;
-  static ROOT::Math::Functor func;
+  ROOT::Math::Minimizer* mini;
+  ROOT::Math::Functor func;
 
   //Inputs
   static TLorentzVector Lepton, LVMET;
   static vector<TLorentzVector> Jets;
 
   //Intermediate
-  static TLorentzVector Neutrino;
+  // static TLorentzVector Neutrino;
 
   //Outputs
   double * MinimizedScalesArray;
@@ -137,11 +154,11 @@ private:
 
 //Initialization of static variables;
 JESTools * ROOTMini::b;
-ROOT::Math::Minimizer* ROOTMini::mini;
-ROOT::Math::Functor ROOTMini::func;
+// ROOT::Math::Minimizer* ROOTMini::mini;
+// ROOT::Math::Functor ROOTMini::func;
 TLorentzVector ROOTMini::Lepton;
 TLorentzVector ROOTMini::LVMET;
 vector<TLorentzVector> ROOTMini::Jets;
-TLorentzVector ROOTMini::Neutrino;
+// TLorentzVector ROOTMini::Neutrino;
 
 #endif

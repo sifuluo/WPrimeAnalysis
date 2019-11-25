@@ -5,6 +5,7 @@
 #include <TH1F.h>
 #include <TF1.h>
 #include <TString.h>
+#include <TLorentzVector.h>
 
 #include <utility>
 #include <vector>
@@ -141,8 +142,8 @@ public:
     return TempHist;
   }
 
-  void FillPlot(double fill, int ieta_ = TempiEta, int ipt_ = TempiPt) {
-    JESVector.at(ieta_).at(ipt)->Fill(fill);
+  void FillPlot(double fill, int ieta_, int ipt_) {
+    JESVector.at(ieta_).at(ipt_)->Fill(fill);
   }
 
   //Below is for Minimizers
@@ -208,7 +209,7 @@ public:
     return 1;
   }
 
-  vector<TLorentzVector> ScaleJets(vector<TLorentzVector> lvjets, double *scales, TLorentzVector LVMET, TLorentzVector& ScaledMET) {
+  vector<TLorentzVector> ScaleJets(vector<TLorentzVector> lvjets, const double *scales, TLorentzVector LVMET, TLorentzVector& ScaledMET) {
     vector<TLorentzVector> scaledjets;
     ScaledMET = LVMET;
     scaledjets.clear();
@@ -223,15 +224,15 @@ public:
   vector< vector<int> > MakePermutations5(int jetsize) {
     vector< vector<int> > Permutations;
     Permutations.clear();
-    for (unsigned ihad1 = 0; ihad1 < jetsize - 1; ++ihad1) {
-      for (unsigned ihad2 = ihad1 + 1; ihad2 < jetsize; ++ihad2) {
-        for (unsigned ihadb = 0; ihadb < jetsize; ++ihadb) {
+    for (int ihad1 = 0; ihad1 < jetsize - 1; ++ihad1) {
+      for (int ihad2 = ihad1 + 1; ihad2 < jetsize; ++ihad2) {
+        for (int ihadb = 0; ihadb < jetsize; ++ihadb) {
           if (ihadb == ihad1 || ihadb == ihad2) continue;
-          for (unsigned ilepb = 0; ilepb < jetsize; ++ ilepb) {
+          for (int ilepb = 0; ilepb < jetsize; ++ ilepb) {
             if (ilepb == ihad1 || ilepb == ihad2 || ilepb == ihadb) continue;
-            for (unsigned iwpb = 0; iwpb < jetsize; ++ iwpb) {
+            for (int iwpb = 0; iwpb < jetsize; ++ iwpb) {
               if (iwpb == ihad1 || iwpb == ihad2 || iwpb == ihadb || iwpb == ilepb) continue;
-              vector<int> perm{ihad1, ihad2, ihadb, ilepb, iwpb};
+              vector<int> perm{ihad1,ihad2,ihadb,ilepb,iwpb};
               Permutations.push_back(perm);
             }
           }
@@ -244,13 +245,18 @@ public:
   vector< vector<int> > MakePermutations(int jetsize) {
     vector< vector<int> > Permutations;
     Permutations.clear();
-    for (unsigned ihad1 = 0; ihad1 < jetsize - 1; ++ihad1) {
-      for (unsigned ihad2 = ihad1 + 1; ihad2 < jetsize; ++ihad2) {
-        for (unsigned ihadb = 0; ihadb < jetsize; ++ihadb) {
+    for (int ihad1 = 0; ihad1 < jetsize - 1; ++ihad1) {
+      for (int ihad2 = ihad1 + 1; ihad2 < jetsize; ++ihad2) {
+        for (int ihadb = 0; ihadb < jetsize; ++ihadb) {
           if (ihadb == ihad1 || ihadb == ihad2) continue;
-          for (unsigned ilepb = 0; ilepb < jetsize; ++ ilepb) {
+          for (int ilepb = 0; ilepb < jetsize; ++ ilepb) {
             if (ilepb == ihad1 || ilepb == ihad2 || ilepb == ihadb) continue;
-            vector<int> perm{ihad1, ihad2, ihadb, ilepb};
+            vector<int> perm{ihad1,ihad2,ihadb,ilepb};
+            // perm.clear();
+            // perm.push_back(ihad1);
+            // perm.push_back(ihad2);
+            // perm.push_back(ihadb);
+            // perm.push_back(ilepb);
             Permutations.push_back(perm);
           }
         }
@@ -267,19 +273,19 @@ public:
     return bperm;
   }
 
-  double CalcPFlavor(vector<int> perm, vector<bool> BTags) {
+  double CalcPFlavor(vector<int> perm_, vector<bool> BTags_) {
     const double RNBMTag(0.01), RNBTag(0.99), RBMTag(0.3), RBTag(0.7);
     double pf = 1;
-    if (Btags.at(perm_.at(0))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
+    if (BTags_.at(perm_.at(0))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
     else pf *= RNBTag; // Non-b-jet tagged non-b;
-    if (Btags.at(perm_.at(1))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
+    if (BTags_.at(perm_.at(1))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
     else pf *= RNBTag; // Non-b-jet tagged non-b;
-    if (BTags.at(perm_.at(2))) pf *= RBTag; // b-jet tagged as a b;
+    if (BTags_.at(perm_.at(2))) pf *= RBTag; // b-jet tagged as a b;
     else pf *= RBMTag; // b-jet tagged to be a non-b;
-    if (BTags.at(perm_.at(3))) pf *= RBTag; // b-jet tagged as a b;
+    if (BTags_.at(perm_.at(3))) pf *= RBTag; // b-jet tagged as a b;
     else pf *= RBMTag; // b-jet tagged to be a non-b;
     if(perm_.size() > 4){
-      if (BTags.at(perm_.at(4))) pf *= RBTag; // b-jet tagged as a b;
+      if (BTags_.at(perm_.at(4))) pf *= RBTag; // b-jet tagged as a b;
       else pf *= RBMTag; // b-jet tagged to be a non-b;
     }
     return pf;
@@ -313,7 +319,7 @@ public:
     return p;
   }
 
-  double CalcPScales(vector<TLorentzVector> LVJets_, double * scales) {
+  double CalcPScales(vector<TLorentzVector> LVJets_, const double * scales) {
     double PScale = 1;
     for (unsigned ij = 0; ij < LVJets_.size(); ++ij) {
       PScale *= CalcPScale(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij]);
