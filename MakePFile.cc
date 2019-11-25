@@ -1,6 +1,6 @@
 #include "Utilities/Analyzer.cc"
 #include "Utilities/JetMatch.cc"
-#include "Utilities/EtaPtBins.cc"
+#include "Utilities/JESTools.cc"
 
 #include <TROOT.h>
 #include <TClonesArray.h>
@@ -14,6 +14,7 @@
 #include <TString.h>
 
 #include <vector>
+#include <utility>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -25,7 +26,7 @@ using namespace std;
 
 void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
   Analyzer *a = new Analyzer(SampleType, irun, 30);
-  EtaPtBins *b = new EtaPtBins();
+  JESTools *b = new JESTools();
   TString savepath = "PFile/";
   TString savename = "PFile";
   a->SetOutput(savepath,savename);
@@ -56,11 +57,11 @@ void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
       double jetpt = lvjet.Pt();
       double jeteta = lvjet.Eta();
       if (jetpt < 30) continue;
-      b->CalcBins(jeteta,jetpt);
+      pair<int,int> bins = b->CalcBins(jeteta,jetpt);
       double rsp = lvgen.Pt() / jetpt;
-      b->FillPlot(rsp);
+      b->FillPlot(rsp, bins.first, bins.second);
       pJetProfile2D->Fill(jetpt,jeteta,rsp);
-      pJetProfiles[b->GetiEta()]->Fill(jetpt,rsp);
+      pJetProfiles[bins.first]->Fill(jetpt,rsp);
 
     }
 
