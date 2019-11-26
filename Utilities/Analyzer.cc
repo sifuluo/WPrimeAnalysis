@@ -500,7 +500,8 @@ void Analyzer::AssignGenParticles() {
 
   LVGenOutSort.clear();
   for (unsigned i = 0; i < GenOutSort.size(); ++i){
-    LVGenOutSort.push_back(GenParticles[ToBeHadron(GenOutSort[i])]->P4());
+    if (GenOutSort[i] == -1) LVGenOutSort.push_back(TLorentzVector());
+    else LVGenOutSort.push_back(GenParticles[ToBeHadron(GenOutSort[i])]->P4());
   }
   // GenOutSort Sequence: Light flavor parton, Hadronic B, Leptonic B, W' B
 
@@ -534,6 +535,10 @@ void Analyzer::AssignGenParticles() {
     LVGenOtB = LVGenHadB;
     LVGenOtW = LVGenHadW;
   }
+}
+
+TLorentzVector Analyzer::GetGenParticleP4(int igen) {
+  return GenParticles[igen]->P4();
 }
 
 void Analyzer::MatchJets(){

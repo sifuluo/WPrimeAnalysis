@@ -87,6 +87,8 @@ public:
   int GenWPT, GenWPTB, GenWPTW, GenOtT, GenOtB, GenOtW;
   TLorentzVector LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtT, LVGenOtB, LVGenOtW;
 
+  TLorentzVector GetGenParticleP4(int igen);
+
   void MatchJets();
   map<int, vector<int> > JetMatchMap;
   double JetMatchMaxDeltaR;

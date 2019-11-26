@@ -1,8 +1,8 @@
 #ifndef JESTOOLS_CC
 #define JESTOOLS_CC
 
+#include <TROOT.h>
 #include <TFile.h>
-#include <TH1F.h>
 #include <TF1.h>
 #include <TString.h>
 #include <TLorentzVector.h>
@@ -10,12 +10,15 @@
 #include <utility>
 #include <vector>
 #include <cmath>
+#include <iostream>
+#include <algorithm>
 
 using namespace std;
 
 class JESTools{
 public:
   JESTools(){
+    // cout << endl <<"Invoked JESTools" <<endl;
     // JESVector.clear();
     // TempiEta = 0;
     // TempiPt = 0;
@@ -146,7 +149,7 @@ public:
     JESVector.at(ieta_).at(ipt_)->Fill(fill);
   }
 
-  //Below is for Minimizers
+  //Below is for Minimizer Interface
   vector< vector<TH1F*> > ReadJESPlots(TFile* f) {
     SetUpMassFunctions();
     vector< vector<TH1F*> > jes;
@@ -162,63 +165,6 @@ public:
     }
     JESVector = jes;
     return jes;
-  }
-
-  void SetUpMassFunctions() {
-    TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
-    WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
-    TopMassDis->SetParameters(100.,172.7,6.7);
-    WMassDis->SetParameters(100,80.385,2.085);
-    TopMassDis->SetParameter(0,100./TopMassDis->Eval(172.7)); // normalized it to peak at y = 1;
-    WMassDis->SetParameter(0,100./WMassDis->Eval(80.385)); // normalized it to peak at y = 1;
-  }
-
-  double SolveNeutrinos(TLorentzVector LVLep, TLorentzVector ScaledMET, vector<TLorentzVector>& LVNeu_) {
-    LVNeu_.clear();
-    const double LepWMass = 80.4;
-    double xn = ScaledMET.X();
-    double yn = ScaledMET.Y();
-    double xe = LVLep.X();
-    double ye = LVLep.Y();
-    double ze = LVLep.Z();
-    double te = LVLep.T();
-    double tar = LepWMass;
-    double zn1, tn1, zn2, tn2;
-
-    double tar2(tar*tar),tar4(tar2*tar2), xexn(xe*xn), yeyn(ye*yn), xe2(xe*xe), ye2(ye*ye), te2(te*te), xnye(xn*ye), xeyn(xe*yn);
-    // if (te2 - xe2 - ye2 - ze2 != 0 && verbose) cout << "Lepton mass is not zero!! : " << te2 - xe2 - ye2 - ze2 <<endl;
-    double radical = (tar4 - 4.*pow((xnye - xeyn),2) + 4.*tar2*(xexn + yeyn))*te2;
-    if (radical < 0) {
-      LVNeu_.push_back(TLorentzVector());
-      LVNeu_.push_back(TLorentzVector());
-      return radical;
-    }
-
-    double coe = 1. / (2.*(xe2 + ye2));
-    double a = (tar2 + 2.*xexn + 2.*yeyn) * ze;
-    double b = sqrt(radical);
-    zn1 = coe*(a + b);
-    zn2 = coe*(a - b);
-    tn1 = sqrt(zn1*zn1 + xn*xn + yn*yn);
-    tn2 = sqrt(zn2*zn2 + xn*xn + yn*yn);
-    TLorentzVector LVNeu1, LVNeu2;
-    LVNeu1.SetXYZT(xn,yn,zn1,tn1);
-    LVNeu2.SetXYZT(xn,yn,zn2,tn2);
-    LVNeu_.push_back(LVNeu1);
-    LVNeu_.push_back(LVNeu2);
-    return 1;
-  }
-
-  vector<TLorentzVector> ScaleJets(vector<TLorentzVector> lvjets, const double *scales, TLorentzVector LVMET, TLorentzVector& ScaledMET) {
-    vector<TLorentzVector> scaledjets;
-    ScaledMET = LVMET;
-    scaledjets.clear();
-    for (unsigned ij = 0; ij < lvjets.size(); ++ij) {
-      TLorentzVector newjet = lvjets.at(ij) * scales[ij];
-      scaledjets.push_back(newjet);
-      ScaledMET = ScaledMET + lvjets.at(ij) - newjet;
-    }
-    return scaledjets;
   }
 
   vector< vector<int> > MakePermutations5(int jetsize) {
@@ -288,6 +234,8 @@ public:
       if (BTags_.at(perm_.at(4))) pf *= RBTag; // b-jet tagged as a b;
       else pf *= RBMTag; // b-jet tagged to be a non-b;
     }
+    double max = 0.7*0.7*0.99*0.99;
+    pf = pf / max;
     return pf;
   }
 
@@ -300,6 +248,65 @@ public:
     // permlv.push_back(LVMET);
     return permlv;
   }
+  //Forminimizer
+  void SetUpMassFunctions() {
+    TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
+    WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
+    TopMassDis->SetParameters(100.,172.7,6.7);
+    WMassDis->SetParameters(100,80.385,2.085);
+    TopMassDis->SetParameter(0,100./TopMassDis->Eval(172.7)); // normalized it to peak at y = 1;
+    WMassDis->SetParameter(0,100./WMassDis->Eval(80.385)); // normalized it to peak at y = 1;
+  }
+
+  double SolveNeutrinos(TLorentzVector LVLep, TLorentzVector ScaledMET, vector<TLorentzVector>& LVNeu_) {
+    LVNeu_.clear();
+    const double LepWMass = 80.4;
+    double xn = ScaledMET.X();
+    double yn = ScaledMET.Y();
+    double xe = LVLep.X();
+    double ye = LVLep.Y();
+    double ze = LVLep.Z();
+    double te = LVLep.T();
+    double tar = LepWMass;
+    double zn1, tn1, zn2, tn2;
+
+    double tar2(tar*tar),tar4(tar2*tar2), xexn(xe*xn), yeyn(ye*yn), xe2(xe*xe), ye2(ye*ye), te2(te*te), xnye(xn*ye), xeyn(xe*yn);
+    // if (te2 - xe2 - ye2 - ze2 != 0 && verbose) cout << "Lepton mass is not zero!! : " << te2 - xe2 - ye2 - ze2 <<endl;
+    double radical = (tar4 - 4.*pow((xnye - xeyn),2) + 4.*tar2*(xexn + yeyn))*te2;
+    if (radical < 0) {
+      LVNeu_.push_back(TLorentzVector());
+      LVNeu_.push_back(TLorentzVector());
+      return radical;
+    }
+
+    double coe = 1. / (2.*(xe2 + ye2));
+    double a = (tar2 + 2.*xexn + 2.*yeyn) * ze;
+    double b = sqrt(radical);
+    zn1 = coe*(a + b);
+    zn2 = coe*(a - b);
+    tn1 = sqrt(zn1*zn1 + xn*xn + yn*yn);
+    tn2 = sqrt(zn2*zn2 + xn*xn + yn*yn);
+    TLorentzVector LVNeu1, LVNeu2;
+    LVNeu1.SetXYZT(xn,yn,zn1,tn1);
+    LVNeu2.SetXYZT(xn,yn,zn2,tn2);
+    LVNeu_.push_back(LVNeu1);
+    LVNeu_.push_back(LVNeu2);
+    return 1;
+  }
+
+  vector<TLorentzVector> ScaleJets(vector<TLorentzVector> lvjets, const double *scales, TLorentzVector LVMET, TLorentzVector& ScaledMET) {
+    vector<TLorentzVector> ScaledJets;
+    ScaledMET = LVMET;
+    ScaledJets.clear();
+    for (unsigned ij = 0; ij < lvjets.size(); ++ij) {
+      TLorentzVector newjet = lvjets.at(ij) * scales[ij];
+      ScaledJets.push_back(newjet);
+      ScaledMET = ScaledMET + lvjets.at(ij) - newjet;
+    }
+    return ScaledJets;
+  }
+
+
 
   pair<double,double> CalcLimits(double eta_, double pt_) {
     pair<int,int> bins = CalcBins(eta_, pt_);
@@ -325,6 +332,22 @@ public:
       PScale *= CalcPScale(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij]);
     }
     return PScale;
+  }
+
+  double CalcPW(TLorentzVector vv) {
+    return WMassDis->Eval(vv.M());
+  }
+
+  double CalcPWMass(double mm) {
+    return WMassDis->Eval(mm);
+  }
+
+  double CalcPT(TLorentzVector vv) {
+    return TopMassDis->Eval(vv.M());
+  }
+
+  double CalcPTMass(double mm) {
+    return TopMassDis->Eval(mm);
   }
 
   double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, TLorentzVector Neu_) {
