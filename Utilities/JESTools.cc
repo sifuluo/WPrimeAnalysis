@@ -3,6 +3,7 @@
 
 #include <TROOT.h>
 #include <TFile.h>
+#include <TH1.h>
 #include <TF1.h>
 #include <TString.h>
 #include <TLorentzVector.h>
@@ -38,6 +39,8 @@ public:
 
   vector< vector<TH1F*> > JESVector;
 
+  vector< vector<TF1*> > JESFuncVector;
+
 
   pair<int,int> TempiBin;
   int TempiEta, TempiPt;
@@ -70,7 +73,7 @@ public:
   int CalcEtaBin(double eta_) {
     int iEta = 0;
     for (unsigned ieta = 0; ieta < (etabins.size() -1); ++ ieta ) {
-      if (eta_ < etabins.at(ieta+1) ) {
+      if (fabs(eta_) < etabins.at(ieta+1) ) {
         iEta = ieta;
         break;
       }
@@ -95,7 +98,7 @@ public:
   pair<int,int> CalcBins(double eta_, double pt_) {
     TempiEta = 0;
     for (unsigned ieta = 0; ieta < (etabins.size() -1); ++ ieta ) {
-      if (eta_ < etabins.at(ieta+1) ) {
+      if (fabs(eta_) < etabins.at(ieta+1) ) {
         TempiEta = ieta;
         break;
       }
@@ -153,18 +156,41 @@ public:
   vector< vector<TH1F*> > ReadJESPlots(TFile* f) {
     SetUpMassFunctions();
     vector< vector<TH1F*> > jes;
+    vector< vector<TF1*> > fjes;
     jes.clear();
+    fjes.clear();
     for (unsigned ieta = 0; ieta < EtaBins().size()-1; ++ieta) {
       vector<TH1F*> jeseta;
+      vector<TF1*> fjeseta;
       jeseta.clear();
+      fjeseta.clear();
       for (unsigned ipt = 0; ipt < PtBins(ieta).size() -1; ++ipt){
         TString sn = Form("eta%d_pt%d", ieta, ipt);
-        jeseta.push_back( (TH1F*)(f->Get(sn))); //Histogram might not be accessible after TFile being closed
+        TH1F* h1 = (TH1F*)(f->Get(sn));
+        jeseta.push_back(h1); //Histogram might not be accessible after TFile being closed
+        //Fitting histogram
+        TString fsn = Form("f_eta%d_pt%d", ieta, ipt);
+        TF1* f1 = new TF1(fsn,"[0]*TMath::BreitWigner(x,[1],[2])",0,2);
+        f1->SetParameters(h1->GetMaximum()/4., 1.0, h1->GetStdDev());
+        h1->Fit(fsn,"RMQ0","",0.,2.);
+        fjeseta.push_back(f1);
       }
       jes.push_back(jeseta);
+      fjes.push_back(fjeseta);
     }
     JESVector = jes;
+    JESFuncVector = fjes;
+    cout << "Finished Fitting" <<endl;
     return jes;
+  }
+
+  void SetUpMassFunctions() {
+    TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
+    WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
+    TopMassDis->SetParameters(100.,172.7,6.7);
+    WMassDis->SetParameters(100,80.385,2.085);
+    TopMassDis->SetParameter(0,100./TopMassDis->Eval(172.7)); // normalized it to peak at y = 1;
+    WMassDis->SetParameter(0,100./WMassDis->Eval(80.385)); // normalized it to peak at y = 1;
   }
 
   vector< vector<int> > MakePermutations5(int jetsize) {
@@ -249,16 +275,9 @@ public:
     return permlv;
   }
   //Forminimizer
-  void SetUpMassFunctions() {
-    TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
-    WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
-    TopMassDis->SetParameters(100.,172.7,6.7);
-    WMassDis->SetParameters(100,80.385,2.085);
-    TopMassDis->SetParameter(0,100./TopMassDis->Eval(172.7)); // normalized it to peak at y = 1;
-    WMassDis->SetParameter(0,100./WMassDis->Eval(80.385)); // normalized it to peak at y = 1;
-  }
 
-  double SolveNeutrinos(TLorentzVector LVLep, TLorentzVector ScaledMET, vector<TLorentzVector>& LVNeu_) {
+  double SolveNeutrinos(TLorentzVector LVLep, TLorentzVector ScaledMET, vector<TLorentzVector>& LVNeu_, bool debug_ = false) {
+    bool debug = debug_;
     LVNeu_.clear();
     const double LepWMass = 80.4;
     double xn = ScaledMET.X();
@@ -271,8 +290,17 @@ public:
     double zn1, tn1, zn2, tn2;
 
     double tar2(tar*tar),tar4(tar2*tar2), xexn(xe*xn), yeyn(ye*yn), xe2(xe*xe), ye2(ye*ye), te2(te*te), xnye(xn*ye), xeyn(xe*yn);
-    // if (te2 - xe2 - ye2 - ze2 != 0 && verbose) cout << "Lepton mass is not zero!! : " << te2 - xe2 - ye2 - ze2 <<endl;
-    double radical = (tar4 - 4.*pow((xnye - xeyn),2) + 4.*tar2*(xexn + yeyn))*te2;
+    if (te2 - xe2 - ye2 - ze*ze != 0 && debug) cout << "Lepton mass is not zero!! : " << te2 - xe2 - ye2 - ze*ze <<endl;
+    double v1 = 4.*pow((xnye - xeyn),2);
+    double v2 = 4.*tar2*(xexn + yeyn);
+    double radical = (tar4 - v1 + v2)*te2;
+
+    if(debug) {
+      cout << Form("Lepton X= %f, Y= %f, Z= %f, T= %f, MET X= %f Y= %f", xe, ye, ze, te, xn, yn)<<endl;
+      cout << Form("tar2= %f, tar4= %f, xexn= %f, yeyn= %f, xe2= %f, ye2= %f, te2= %f, xnye= %f, xeyn= %f",tar2,tar4,xexn,yeyn,xe2,ye2,te2,xnye,xeyn)<<endl;
+      cout << Form("radical = (tar4 - v1 + v2)*te2, here tar4 = %f, v1 = %f, v2 = %f, te2 = %f", tar4, v1, v2, te2)<<endl;
+    }
+
     if (radical < 0) {
       LVNeu_.push_back(TLorentzVector());
       LVNeu_.push_back(TLorentzVector());
@@ -298,7 +326,7 @@ public:
     vector<TLorentzVector> ScaledJets;
     ScaledMET = LVMET;
     ScaledJets.clear();
-    for (unsigned ij = 0; ij < lvjets.size(); ++ij) {
+    for (unsigned ij = 0; ij < 4; ++ij) {
       TLorentzVector newjet = lvjets.at(ij) * scales[ij];
       ScaledJets.push_back(newjet);
       ScaledMET = ScaledMET + lvjets.at(ij) - newjet;
@@ -306,9 +334,7 @@ public:
     return ScaledJets;
   }
 
-
-
-  pair<double,double> CalcLimits(double eta_, double pt_) {
+  pair<double,double> CalcLimitsHist(double eta_, double pt_) {
     pair<int,int> bins = CalcBins(eta_, pt_);
     TH1F* hist = JESVector.at(bins.first).at(bins.second);
     double limits[2];
@@ -317,19 +343,46 @@ public:
     return pair<double, double>(limits[0],limits[1]);
   }
 
-  double CalcPScale(double eta_, double pt_, double scale_) {
+  pair<double,double> CalcLimitsFunc(double eta_, double pt_) {
+    pair<int,int> bins = CalcBins(eta_, pt_);
+    TF1* f1 = JESFuncVector.at(bins.first).at(bins.second);
+    double mean = f1->GetParameter(1);
+    double sigma = f1->GetParameter(2);
+    return pair<double, double>(mean-2*sigma,mean+2*sigma);
+  }
+
+  double CalcPScaleHist(double eta_, double pt_, double scale_, int debug_ = 0) {
     pair<int,int> bins = CalcBins(eta_, pt_);
     TH1F* hist = JESVector.at(bins.first).at(bins.second);
     double n = hist->GetBinContent(hist->FindBin(scale_));
     double norm = hist->GetBinContent(hist->GetMaximumBin());
     double p = n/norm;
+    if (debug_) cout <<endl << Form("Jet Pt = %f (%d), Eta = %f (%d), Scale = %f, n = %f, norm = %f, p = %f", pt_,bins.second, eta_, bins.first, scale_, n, norm, p) <<endl;
     return p;
   }
 
-  double CalcPScales(vector<TLorentzVector> LVJets_, const double * scales) {
+  double CalcPScaleFunc(double eta_, double pt_, double scale_, int debug_ = 0) {
+    pair<int,int> bins = CalcBins(eta_, pt_);
+    TF1* func = JESFuncVector.at(bins.first).at(bins.second);
+    double n = func->Eval(scale_);
+    double norm = func->GetMaximum();
+    double p = n / norm;
+    if (debug_) cout <<endl << Form("Jet Pt = %f (%d), Eta = %f (%d), Scale = %f, n = %f, norm = %f, p = %f", pt_,bins.second, eta_, bins.first, scale_, n, norm, p) <<endl;
+    return p;
+  }
+
+  double CalcPScalesHist(vector<TLorentzVector> LVJets_, const double * scales, int debug_ = 0) {
     double PScale = 1;
-    for (unsigned ij = 0; ij < LVJets_.size(); ++ij) {
-      PScale *= CalcPScale(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij]);
+    for (unsigned ij = 0; ij < 4; ++ij) {
+      PScale *= CalcPScaleHist(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij], debug_);
+    }
+    return PScale;
+  }
+
+  double CalcPScalesFunc(vector<TLorentzVector> LVJets_, const double * scales, int debug_ = 0) {
+    double PScale = 1;
+    for (unsigned ij = 0; ij < 4; ++ij) {
+      PScale *= CalcPScaleFunc(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij], debug_);
     }
     return PScale;
   }
@@ -351,7 +404,7 @@ public:
   }
 
   double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, TLorentzVector Neu_) {
-    return TopMassDis->Eval((Lep_ + Neu_ + LepB_).M());
+    return TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
   }
 
   double CalcPHad(vector<TLorentzVector> ScaledJets) {

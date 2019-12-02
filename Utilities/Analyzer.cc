@@ -416,7 +416,8 @@ int Analyzer::ToBeHadron(int igen) {
   return igen;
 }
 
-void Analyzer::AssignGenParticles() {
+int Analyzer::AssignGenParticles() {
+  if (GenW.size() !=2 || LVLeptons.size() !=1) return -1;
   if (SampleType == 2) {
     WP = -1;
     GenWPB = -1;
@@ -535,6 +536,7 @@ void Analyzer::AssignGenParticles() {
     LVGenOtB = LVGenHadB;
     LVGenOtW = LVGenHadW;
   }
+  return 0;
 }
 
 TLorentzVector Analyzer::GetGenParticleP4(int igen) {

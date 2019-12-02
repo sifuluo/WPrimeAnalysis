@@ -79,7 +79,7 @@ public:
   TLorentzVector LVMET;
 
   // Assigning Gen Particles
-  void AssignGenParticles();
+  int AssignGenParticles();
   int WP, GenWPB, GenHadT, GenHadB, GenHadW, GenLepT, GenLepB, GenLepW, GenLep, GenNeu;
   TLorentzVector LVWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu;
   vector<TLorentzVector> LVGenLFJet, LVGenOutSort;

@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <string>
 
-void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
+void GenMinimizeTest(int SampleType = 2, int irun = 1, int debug = 0) {
   cout << "start" <<endl;
   //SetUpUtilities
   Analyzer *a = new Analyzer(SampleType, irun, 30);
@@ -36,9 +36,26 @@ void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
   a->SetOutput(savepath,savename);
   a->DebugMode(debug);
 
+  bool output_ = false;
+
+  TH1F* GenHadWMass = new TH1F("GenHadWMass","GenHadWMass", 300,50., 110.);
+  TH1F* GenLepWMass = new TH1F("GenLepWMass","GenLepWMass", 300,50., 110.);
+  TH1F* GenHadTMass = new TH1F("GenHadTMass","GenHadTMass", 600,110., 230.);
+  TH1F* GenLepTMass = new TH1F("GenLepTMass","GenLepTMass", 600,110., 230.);
+  TH1F* GenPDis     = new TH1F("GenPDis"    ,"GenP distribution", 100,0,1);
+
+  TH1F* SolLepTMass = new TH1F("SolLepTMass","SolLepTMass", 600,110., 230.);
+  TH1F* SolPDis     = new TH1F("SolPDis"    ,"SolP distribution", 100,0,1);
+
+  TH1F* MinHadWMass = new TH1F("MinHadWMass","MinHadWMass", 300,50., 110.);
+  TH1F* MinLepWMass = new TH1F("MinLepWMass","MinLepWMass", 300,50., 110.);
+  TH1F* MinHadTMass = new TH1F("MinHadTMass","MinHadTMass", 600,110., 230.);
+  TH1F* MinLepTMass = new TH1F("MinLepTMass","MinLepTMass", 600,110., 230.);
+  TH1F* MinPDis     = new TH1F("MinPDis"    ,"MinP distribution", 100,0,1);
+
   for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
     a->ReadEvent(entry);
-    a->AssignGenParticles();
+    if (a->AssignGenParticles() == -1) continue;
     // Gen as Jets
     vector<int> GenOutSort = a->GenOutSort;
     vector<TLorentzVector> Jets;
@@ -56,77 +73,158 @@ void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
       cout << "Set of Gen particles incomplete, skipping" <<endl;
       continue;
     }
-    double scalestemp[4] = {1,1,1,1};
-    double * scales = scalestemp;
     TLorentzVector Lepton = a->LVGenLep;
     TLorentzVector LVMET = a->LVGenNeu;
 
-
     vector< vector<int> > perms = b->MakePermutations(Jets.size());
     vector<int> perm = perms.at(0);
-    double PScale = b->CalcPScales(Jets, scales);
-    TLorentzVector ScaledMET;
+
+    // Showing results before minimization
+    double scalestemp[4] = {1,1,1,1};
+    double * scales = scalestemp;
+    TLorentzVector ScaledMET,Neutrino;
     vector<TLorentzVector> ScaledJets = b->ScaleJets(Jets, scales, a->LVGenNeu, ScaledMET);
     vector<TLorentzVector> Neutrinos;
     double PNeutrino = b->SolveNeutrinos(Lepton, ScaledMET, Neutrinos);
+    double lepw,lept,hadw,hadt,plepw,plept,phadw,phadt,PScale,PHad,PLep,Prob;
 
-    if (PNeutrino < 0) continue;
-    double PHad = b->CalcPHad(ScaledJets);
-    double PLep = 0;
-    TLorentzVector Neutrino = TLorentzVector();
-    for (unsigned in = 0; in < Neutrinos.size(); ++in) {
-      TLorentzVector NeutrinoTemp =  Neutrinos.at(in);
-      // double PLepTMassTemp = b->CalcPLep(ScaledJets.at(3), Lepton, NeutrinoTemp);
-      double PLepTMassTemp = b->CalcPTMass((ScaledJets.at(3)+Lepton+NeutrinoTemp).M());
-      if (PLepTMassTemp > PLep) {
-        PLep = PLepTMassTemp;
-        Neutrino = NeutrinoTemp;
+    if (PNeutrino < 0) {
+      cout << "Gen PNeutrino = " << PNeutrino <<endl;
+    }
+    else {
+      PScale = b->CalcPScalesFunc(Jets, scales);
+      PHad = b->CalcPHad(ScaledJets);
+      PLep = 0;
+      Neutrino = TLorentzVector();
+      for (unsigned in = 0; in < Neutrinos.size(); ++in) {
+        TLorentzVector NeutrinoTemp =  Neutrinos.at(in);
+        // double PLepTMassTemp = b->CalcPLep(ScaledJets.at(3), Lepton, NeutrinoTemp);
+        double PLepTMassTemp = b->CalcPTMass((ScaledJets.at(3)+Lepton+NeutrinoTemp).M());
+        if (PLepTMassTemp > PLep) {
+          PLep = PLepTMassTemp;
+          Neutrino = NeutrinoTemp;
+        }
+      }
+      Prob = PScale * PHad * PLep * (1.0);
+
+      //Outputs;
+      lepw = (Lepton + LVMET).M();
+      lept = (Lepton + LVMET + Jets[3]).M();
+      hadw = (Jets[0]+Jets[1]).M();
+      hadt = (Jets[0]+Jets[1]+Jets[2]).M();
+      plepw = b->CalcPWMass(lepw);
+      plept = b->CalcPTMass(lept);
+      phadw = b->CalcPWMass(hadw);
+      phadt = b->CalcPTMass(hadt);
+      GenHadWMass->Fill(hadw);
+      GenLepWMass->Fill(lepw);
+      GenHadTMass->Fill(hadt);
+      GenLepTMass->Fill(lept);
+      GenPDis->Fill(plepw*plept*phadw*phadt);
+
+
+      if (output_) {
+        cout << endl<<endl;
+        cout << "----Before Minimizer-----" <<endl;
+        cout << "------Before Scale------" <<endl;
+        cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
+        cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PHad = %f, PLep = %f, PTotal = %f",plepw,plept,phadw,phadt, phadw*phadt, plepw*plept,plepw*plept*phadw*phadt) <<endl;
+      }
+      lepw = (Lepton + Neutrino).M();
+      lept = (Lepton + Neutrino + ScaledJets[3]).M();
+      hadw = (ScaledJets[0]+ScaledJets[1]).M();
+      hadt = (ScaledJets[0]+ScaledJets[1]+ScaledJets[2]).M();
+      plepw = b->CalcPWMass(lepw);
+      plept = b->CalcPTMass(lept);
+      phadw = b->CalcPWMass(hadw);
+      phadt = b->CalcPTMass(hadt);
+      SolLepTMass->Fill(lept);
+      SolPDis->Fill(plepw*plept*phadw*phadt);
+
+
+      if (output_) {
+        cout << "------After Scale------" <<endl;
+        cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
+        cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PHad = %f, PLep = %f, PTotal = %f",plepw,plept,phadw,phadt, phadw*phadt, plepw*plept,plepw*plept*phadw*phadt) <<endl;
+        cout << "------In Summary------" <<endl;
+        cout << Form("PScale = %f, PHad = %f, PLep = %f, P = %f",PScale,PHad, PLep, Prob)<<endl;
+        cout << Form("Scales are: %f, %f, %f, %f", scales[0], scales[1], scales[2], scales[3]) << endl;
       }
     }
-    double Prob = PScale * PHad * PLep * (-1.0);
 
-    //Outputs;
-    cout << "------Before Scale------" <<endl;
-    double lepw = (Lepton + LVMET).M();
-    double lept = (Lepton + LVMET + Jets[3]).M();
-    double hadw = (Jets[0]+Jets[1]).M();
-    double hadt = (Jets[0]+Jets[1]+Jets[2]).M();
-    double plepw = b->CalcPWMass(lepw);
-    double plept = b->CalcPTMass(lept);
-    double phadw = b->CalcPWMass(hadw);
-    double phadt = b->CalcPTMass(hadt);
-    cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
-    cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PTotal = %f",plepw,plept,phadw,phadt, plept*phadw*phadt) <<endl;
-    cout << "------After Scale------" <<endl;
-    lepw = (Lepton + Neutrino).M();
-    lept = (Lepton + Neutrino + ScaledJets[3]).M();
-    hadw = (ScaledJets[0]+ScaledJets[1]).M();
-    hadt = (ScaledJets[0]+ScaledJets[1]+ScaledJets[2]).M();
-    plepw = b->CalcPWMass(lepw);
-    plept = b->CalcPTMass(lept);
-    phadw = b->CalcPWMass(hadw);
-    phadt = b->CalcPTMass(hadt);
-    cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
-    cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PTotal = %f",plepw,plept,phadw,phadt, plept*phadw*phadt) <<endl;
-    cout << "------In Summary------" <<endl;
-    cout << Form("PScale = %f, PHad = %f, PLep = %f, P = %f",PScale,PHad, PLep, Prob)<<endl;
-    cout << Form("Scales are: %f, %f, %f, %f", scales[0], scales[1], scales[2], scales[3]) << endl;
+
 
     // cout << Form("PLep1 = %f, PLep2 = %f", b->CalcPTMass((ScaledJets[3]+Lepton+Neutrinos[0]).M()), b->CalcPTMass((ScaledJets[3]+Lepton+Neutrinos[1]).M()) )<<endl;
 
     // Using the minimizer
     m->SetLep(Lepton, LVMET);
-    // m->SetJets(Jets);
-    // m->SetMinimizer();
     m->MinimizeP(Jets);
-    // double* minscales = m->GetScalesArray();
-    // m->SetDebug(1);
-    // m->CalcP(scales);
+    double tempminscales[4] = {m->InterScalesArray[0],m->InterScalesArray[1],m->InterScalesArray[2],m->InterScalesArray[3]};
+    scales = tempminscales;
+    // cout << Form("Minscales: %f, %f, %f,%f",scales[0],scales[1],scales[2],scales[3] )<<endl;
+    //After Minimizer
 
+
+    PNeutrino = m->InterPNeutrino;
+
+    if (PNeutrino < 0) {
+      cout << "Min PNeutrino = " << PNeutrino <<endl;
+    }
+    else {
+      PScale = m->InterProbs[0];
+      double InterPHad = m->InterProbs[1];
+      double InterPLep = m->InterProbs[2];
+      double InterProb = m->InterProbs[3];
+      ScaledJets = m->InterScaledJets;
+      Neutrino = m->InterNeutrino;
+      PHad = b->CalcPHad(ScaledJets);
+      PLep = b->CalcPTMass((ScaledJets.at(3)+Lepton+Neutrino).M());
+
+      Prob = PScale * PHad * PLep * (1.0);
+      lepw = (Lepton + LVMET).M();
+      lept = (Lepton + LVMET + Jets[3]).M();
+      hadw = (Jets[0]+Jets[1]).M();
+      hadt = (Jets[0]+Jets[1]+Jets[2]).M();
+      plepw = b->CalcPWMass(lepw);
+      plept = b->CalcPTMass(lept);
+      phadw = b->CalcPWMass(hadw);
+      phadt = b->CalcPTMass(hadt);
+      if (output_) {
+        cout << endl<<endl;
+        cout << "----After Minimizer-----" <<endl;
+        cout << "------Before Scale------" <<endl;
+        cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
+        cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PHad = %f, PLep = %f, PTotal = %f",plepw,plept,phadw,phadt, phadw*phadt, plepw*plept,plepw*plept*phadw*phadt) <<endl;
+      }
+      lepw = (Lepton + Neutrino).M();
+      lept = (Lepton + Neutrino + ScaledJets[3]).M();
+      hadw = (ScaledJets[0]+ScaledJets[1]).M();
+      hadt = (ScaledJets[0]+ScaledJets[1]+ScaledJets[2]).M();
+      plepw = b->CalcPWMass(lepw);
+      plept = b->CalcPTMass(lept);
+      phadw = b->CalcPWMass(hadw);
+      phadt = b->CalcPTMass(hadt);
+      MinHadWMass->Fill(hadw);
+      MinLepWMass->Fill(lepw);
+      MinHadTMass->Fill(hadt);
+      MinLepTMass->Fill(lept);
+      MinPDis->Fill(plepw*plept*phadw*phadt);
+
+      if (output_) {
+        cout << "------After Scale------" <<endl;
+        cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
+        cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PHad = %f, PLep = %f, PTotal = %f",plepw,plept,phadw,phadt, phadw*phadt, plepw*plept,plepw*plept*phadw*phadt) <<endl;
+        cout << "------In Summary------" <<endl;
+        cout << Form("Scales are: %f, %f, %f, %f", scales[0], scales[1], scales[2], scales[3]) << endl;
+        cout << Form("PScale = %f, PHad = %f, PLep = %f, P = %f",PScale,PHad, PLep, Prob)<<endl;
+        cout << "Minimizer gives:" <<endl;
+        cout << Form("PScale = %f, PHad = %f, PLep = %f, P = %f",PScale, InterPHad, InterPLep, InterProb)<<endl;
+      }
+    }
 
 
   }
 
-
+  a->SaveOutput();
 
 }
