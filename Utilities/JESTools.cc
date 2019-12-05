@@ -187,7 +187,7 @@ public:
   void SetUpMassFunctions() {
     TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
     WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
-    TopMassDis->SetParameters(100.,172.7,6.7);
+    TopMassDis->SetParameters(100.,172.7,1.32);
     WMassDis->SetParameters(100,80.385,2.085);
     TopMassDis->SetParameter(0,100./TopMassDis->Eval(172.7)); // normalized it to peak at y = 1;
     WMassDis->SetParameter(0,100./WMassDis->Eval(80.385)); // normalized it to peak at y = 1;

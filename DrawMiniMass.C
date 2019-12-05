@@ -1,5 +1,5 @@
 {
-  TFile* f = new TFile("results/MinimizerTest.root");
+  TFile* f = new TFile("results/MinimizerTestFunc.root");
   TH1F* GenHadWMass = (TH1F*) f->Get("GenHadWMass");
   TH1F* GenLepWMass = (TH1F*) f->Get("GenLepWMass");
   TH1F* GenHadTMass = (TH1F*) f->Get("GenHadTMass");
@@ -18,7 +18,7 @@
   TF1* w = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
   TF1* t = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
   TCanvas *c1 = new TCanvas();
-  t->SetParameters(100.,172.7,6.7);//1.32
+  t->SetParameters(100.,172.7,1.32);//1.32
   w->SetParameters(100,80.385,2.085);
 
   TH1F* hw = GenHadWMass;
