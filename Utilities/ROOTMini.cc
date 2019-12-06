@@ -25,6 +25,7 @@ public:
   ROOTMini(JESTools *b_) {
     // cout << endl <<"Invoked Minimizer" <<endl;
     b = b_;
+    double temparray[4];
   };
 
   void SetLep(TLorentzVector Lepton_, TLorentzVector MET_) {
@@ -126,7 +127,7 @@ public:
     FunctionCalls = 0;
     //Set up minimizer
     func = ROOT::Math::Functor(&CalcP,4);
-    mini->SetPrintLevel(0);
+    mini->SetPrintLevel(3);
     mini->SetStrategy(3);
     mini->SetMaxFunctionCalls(100000);
     mini->SetMaxIterations(10000);
@@ -134,8 +135,8 @@ public:
     mini->SetErrorDef(0.5);
     mini->SetFunction(func);
     ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(100000);
-    SetDebug(0);
-    //Setting Jets
+    // SetDebug(0);
+    // Setting Jets
     Jets = Jets_;
     vector< pair<double, double> > ScaleLimits;
     for (unsigned ij = 0; ij < 4; ++ij) {
@@ -149,7 +150,7 @@ public:
     if (debug) cout << endl<< "Minimizer Successfully Ran" <<endl;
     MinimizedScales.clear();
     double Prob = 0;
-    if (!(mini->Status())&& false) {
+    if (!(mini->Status())) {
       if (debug) {
         cout << endl<< "Successfully minimized" <<endl;
       }
@@ -190,7 +191,7 @@ public:
   }
 
   vector<double> GetPs(TLorentzVector &Neutrino) {
-    double PScale = b->CalcPScalesHist(Jets, MinimizedScalesArray);
+    double PScale = b->CalcPScalesFunc(Jets, MinimizedScalesArray);
 
     TLorentzVector ScaledMET;
     vector<TLorentzVector> ScaledJets = b->ScaleJets(Jets, MinimizedScalesArray, LVMET, ScaledMET);
@@ -213,6 +214,7 @@ public:
 
     return Probs;
   }
+
   // Unfinished outputs
   static double * InterScalesArray;
   static vector<TLorentzVector> InterScaledJets;
@@ -221,6 +223,11 @@ public:
   static vector<double> InterProbs;
   static double InterPNeutrino;
   static TH1F* InterProbHist;
+
+  //Outputs
+  double * MinimizedScalesArray = new double[4];
+  vector<double> MinimizedScales;
+  vector<TLorentzVector> MinizedJets;
 
 private:
   static JESTools *b; // Base tool
@@ -237,11 +244,6 @@ private:
   // static TLorentzVector Neutrino;
   static int debug;
   static int FunctionCalls;
-
-  //Outputs
-  double * MinimizedScalesArray;
-  vector<double> MinimizedScales;
-  vector<TLorentzVector> MinizedJets;
 };
 
 //Initialization of static variables;
