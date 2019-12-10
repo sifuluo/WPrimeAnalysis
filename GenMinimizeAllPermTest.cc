@@ -23,7 +23,7 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
   //SetUpUtilities
   Analyzer *a = new Analyzer(SampleType, irun, 30);
   TString savepath = "results/";
-  TString savename = "MinimizerAllPermTest";
+  TString savename = "MinimizerAllPerm4Test";
 
 
   JESTools *b = new JESTools();
@@ -37,8 +37,18 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
   a->DebugMode(debug);
   m->SetDebug(0);
 
-  TH1F* BestPDis     = new TH1F("BestPDis"    ,"Best P distribution", 100,0,1);
-
+  vector<double> PermPs;
+  vector< vector<int> > perms = b->MakePermutations(4);
+  int nperm = perms.size();
+  cout << endl;
+  for (int ip = 0; ip < nperm; ++ip) {
+    vector<int> thisperm = perms[ip];
+    cout << Form("Perm: %i: (%i,%i,%i,%i)", ip, thisperm[0],thisperm[1],thisperm[2],thisperm[3]) <<endl;
+  }
+  TH1F* RightPermP = new TH1F("RightPermP", "P distribution of the correct perm",100,0,1);
+  TH1F* BestPermP     = new TH1F("BestPermP"    ,"Best Perm P distribution", 100,0,1);
+  TH2F* BestPVsPerm  = new TH2F("BestPVsPerm", "Best P of the Best Permutation;PermIndex;P",nperm+1,-0.5,nperm+0.5,100,0.,1.);
+  TH2F* BestPDiffVsPerm  = new TH2F("BestPDiffVsPerm", "Diff Best P of the Best Permutation and the right one;PermIndex;P",nperm+1,-0.5,nperm+0.5,100,0.,1.);
 
   for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
     a->ReadEvent(entry);
@@ -49,7 +59,7 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
     // vector<int> GenOutQuark = a->GenOutQuark;
     vector<int> GenOutQuark = a->GenOutSort;
     bool allfound = true;
-    for (unsigned ig = 0; ig < GenOutQuark.size(); ++ig) {
+    for (unsigned ig = 0; ig < 4; ++ig) {
       if (GenOutQuark[ig] == -1) {
         allfound = false;
         AllJets.push_back(TLorentzVector());
@@ -62,13 +72,13 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
       cout << "Set of Gen particles incomplete, skipping" <<endl;
       continue;
     }
-
     TLorentzVector Lepton = a->LVGenLep;
     TLorentzVector LVMET = a->LVGenNeu;
     m->SetLep(Lepton, LVMET);
 
-    vector<double> PermPs;
-    vector< vector<int> > perms = b->MakePermutations(AllJets.size());
+    double RightP = 0;
+    double BestP = 0;
+    int BestPerm = 0;
     for (unsigned iperm = 0; iperm < perms.size(); ++iperm) {
       vector<int> thisperm = perms.at(iperm);
       vector<TLorentzVector> Jets;
@@ -76,16 +86,19 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
         Jets.push_back(AllJets.at(thisperm.at(ip)));
       }
       double ThisP = m->MinimizeP(Jets);
-
+      if (iperm == 0) RightP = ThisP;
+      if (ThisP > BestP) {
+        BestP = ThisP;
+        BestPerm = iperm;
+      }
+    }
+    RightPermP->Fill(RightP);
+    BestPermP->Fill(BestP);
+    BestPVsPerm->Fill(BestPerm,BestP);
+    if (BestPerm != 0) {
+      BestPDiffVsPerm->Fill(BestPerm,BestP-RightP);
     }
 
-    BestPDis->Fill(BestP);
-    // cout << endl << "BestP = " << BestP << Form(" BestPerm is %i,%i,%i,%i",BestPerm[0],BestPerm[1],BestPerm[2],BestPerm[3]) <<endl;
-    // if (!RightPerm) {
-    //   WrongPDis->Fill(BestP);
-    //   RightPDis->Fill(RightPermP);
-    //   cout << "Wrong but Best P = " << BestP << ", Right Perm P = " << RightPermP <<endl;
-    // }
 
   }
   a->SaveOutput();
