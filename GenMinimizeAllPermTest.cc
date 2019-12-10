@@ -47,6 +47,7 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
   }
   TH1F* RightPermP = new TH1F("RightPermP", "P distribution of the correct perm",100,0,1);
   TH1F* BestPermP     = new TH1F("BestPermP"    ,"Best Perm P distribution", 100,0,1);
+  TH1F* PermChoice = new TH1F("PermChoice","Permutation with the best P",nperm+1, -0.5,nperm+0.5);
   TH2F* BestPVsPerm  = new TH2F("BestPVsPerm", "Best P of the Best Permutation;PermIndex;P",nperm+1,-0.5,nperm+0.5,100,0.,1.);
   TH2F* BestPDiffVsPerm  = new TH2F("BestPDiffVsPerm", "Diff Best P of the Best Permutation and the right one;PermIndex;P",nperm+1,-0.5,nperm+0.5,100,0.,1.);
 
@@ -94,6 +95,7 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
     }
     RightPermP->Fill(RightP);
     BestPermP->Fill(BestP);
+    PermChoice->Fill(BestPerm);
     BestPVsPerm->Fill(BestPerm,BestP);
     if (BestPerm != 0) {
       BestPDiffVsPerm->Fill(BestPerm,BestP-RightP);
