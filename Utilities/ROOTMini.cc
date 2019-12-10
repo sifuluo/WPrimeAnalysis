@@ -25,7 +25,6 @@ public:
   ROOTMini(JESTools *b_) {
     // cout << endl <<"Invoked Minimizer" <<endl;
     b = b_;
-    double temparray[4];
   };
 
   void SetLep(TLorentzVector Lepton_, TLorentzVector MET_) {
@@ -35,6 +34,10 @@ public:
 
   void SetDebug(int debug_) {
     debug = debug_;
+  }
+
+  void SetTempOutput(int TempOutput_) {
+    TempOutput = TempOutput_;
   }
 
   static double CalcP(const double *scales) {
@@ -79,21 +82,22 @@ public:
     //Summing all and make it negative
     double Prob = (PScale * PHad * PLep * (-1.0) + 1);
     //Intermediate outputs
-    double temparray[4];
-    for (unsigned is = 0; is < 4; ++is) {
-      temparray[is] = scales[is];
+    if (TempOutput) {
+      InterScalesVector.clear();
+      for (unsigned is = 0; is < 4; ++is) {
+        InterScalesVector.push_back(scales[is]);
+      }
+      InterScaledJets = ScaledJets;
+      InterScaledMET = ScaledMET;
+      InterNeutrino = Neutrino;
+      vector<double> tempp{PScale,PHad,PLep,Prob};
+      InterProbs = tempp;
     }
-    InterScalesArray = temparray;
-    InterScaledJets = ScaledJets;
-    InterScaledMET = ScaledMET;
-    InterNeutrino = Neutrino;
-    vector<double> tempp{PScale,PHad,PLep,Prob};
-    InterProbs = tempp;
-    InterProbHist->Fill((-1)*Prob);
+
     //Outputs for debugging
     if (debug) {
       cout << endl <<"------In Minimizer------" <<endl;
-      cout << "------Before Scale------" <<endl;
+      // cout << "------Before Scale------" <<endl;
       double lepw = (Lepton + LVMET).M();
       double lept = (Lepton + LVMET + Jets[3]).M();
       double hadw = (Jets[0]+Jets[1]).M();
@@ -102,8 +106,8 @@ public:
       double plept = b->CalcPTMass(lept);
       double phadw = b->CalcPWMass(hadw);
       double phadt = b->CalcPTMass(hadt);
-      cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
-      cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PHad = %f, PLep = %f",plepw,plept,phadw,phadt, phadw*phadt, plepw*plept) <<endl;
+      // cout << Form("LepWMass = %f, LepTMass = %f, HadWMass = %f, HadTMass = %f",lepw,lept,hadw,hadt) <<endl;
+      // cout << Form("PLepWMass = %f, PLepTMass = %f, PHadWMass = %f, PHadTMass = %f, PHad = %f, PLep = %f",plepw,plept,phadw,phadt, phadw*phadt, plepw*plept) <<endl;
       cout << "------After Scale------" <<endl;
       lepw = (Lepton + Neutrino).M();
       lept = (Lepton + Neutrino + ScaledJets[3]).M();
@@ -127,7 +131,10 @@ public:
     FunctionCalls = 0;
     //Set up minimizer
     func = ROOT::Math::Functor(&CalcP,4);
-    mini->SetPrintLevel(3);
+    mini->SetPrintLevel(0);
+    if (debug) {
+      mini->SetPrintLevel(3);
+    }
     mini->SetStrategy(3);
     mini->SetMaxFunctionCalls(100000);
     mini->SetMaxIterations(10000);
@@ -158,7 +165,7 @@ public:
         MinimizedScalesArray[is] = mini->X()[is];
         MinimizedScales.push_back(mini->X()[is]);
       }
-      Prob = (-1 * (mini->MinValue()));
+      Prob = (1. - (mini->MinValue()));
     }
     else {
       if (debug) {
@@ -173,8 +180,8 @@ public:
   }
 
   // Unfinished outputs
-  double * GetInterScalesArray() {
-    return InterScalesArray;
+  vector<double> GetInterScalesVector() {
+    return InterScalesVector;
   }
 
   // Outputs
@@ -190,7 +197,7 @@ public:
     return b->ScaleJets(Jets, MinimizedScalesArray, LVMET, met_ );
   }
 
-  vector<double> GetPs(TLorentzVector &Neutrino) {
+  vector<double> ReCalcPs(TLorentzVector &Neutrino) {
     double PScale = b->CalcPScalesFunc(Jets, MinimizedScalesArray);
 
     TLorentzVector ScaledMET;
@@ -216,13 +223,12 @@ public:
   }
 
   // Unfinished outputs
-  static double * InterScalesArray;
+  static vector<double> InterScalesVector;
   static vector<TLorentzVector> InterScaledJets;
   static TLorentzVector InterScaledMET;
   static TLorentzVector InterNeutrino;
   static vector<double> InterProbs;
   static double InterPNeutrino;
-  static TH1F* InterProbHist;
 
   //Outputs
   double * MinimizedScalesArray = new double[4];
@@ -243,6 +249,7 @@ private:
   //Intermediate
   // static TLorentzVector Neutrino;
   static int debug;
+  static int TempOutput;
   static int FunctionCalls;
 };
 
@@ -256,15 +263,15 @@ vector<TLorentzVector> ROOTMini::Jets;
 int ROOTMini::FunctionCalls;
 
 //Intermediate outputs
-double * ROOTMini:: InterScalesArray;
+vector<double>  ROOTMini:: InterScalesVector;
 vector<TLorentzVector> ROOTMini::InterScaledJets;
 TLorentzVector ROOTMini::InterScaledMET;
 TLorentzVector ROOTMini::InterNeutrino;
 vector<double> ROOTMini::InterProbs;
 double ROOTMini::InterPNeutrino;
-TH1F* ROOTMini::InterProbHist = new TH1F("inter","inter",100,0,1);
 
 // TLorentzVector ROOTMini::Neutrino;
-int ROOTMini::debug;
+int ROOTMini::debug = 0;
+int ROOTMini::TempOutput = 0;
 
 #endif

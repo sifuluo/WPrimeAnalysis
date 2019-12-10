@@ -18,7 +18,7 @@ echo "SLURM_ARRAY_TASK_ID=$SLURM_ARRAY_TASK_ID" #the index within in a job
 # root -l -b "hypothesis.cc+(0,$SLURM_ARRAY_TASK_ID,-2)"
 # root -l -b "MatchTest.cc+(0,$SLURM_ARRAY_TASK_ID,-2)"
 # root -l -b "MakePFile.cc+(0,$SLURM_ARRAY_TASK_ID,-2)"
-root -l -b "GenMinimizeTest.cc+(0,$SLURM_ARRAY_TASK_ID,-2)"
+root -l -b "GenMinimizeBestPermTest.cc+(0,$SLURM_ARRAY_TASK_ID,-2)"
 
 echo "ended at `date` on `hostname`"
 exit 0

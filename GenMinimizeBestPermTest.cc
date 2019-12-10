@@ -18,12 +18,12 @@
 #include <algorithm>
 #include <string>
 
-void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
+void GenMinimizeBestPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
   cout << "start" <<endl;
   //SetUpUtilities
   Analyzer *a = new Analyzer(SampleType, irun, 30);
   TString savepath = "results/";
-  TString savename = "MinimizerTest";
+  TString savename = "MinimizerBestPermTest";
 
 
   JESTools *b = new JESTools();
@@ -35,8 +35,9 @@ void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
 
   a->SetOutput(savepath,savename);
   a->DebugMode(debug);
-  m->SetDebug(1);
-  bool output_ = true;
+  m->SetDebug(0);
+  m->SetTempOutput(1);
+  bool output_ = false;
 
   TH1F* GenHadWMass = new TH1F("GenHadWMass","GenHadWMass", 300,50., 110.);
   TH1F* GenLepWMass = new TH1F("GenLepWMass","GenLepWMass", 300,50., 110.);
@@ -159,11 +160,11 @@ void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
     // Using the minimizer
     m->SetLep(Lepton, LVMET);
     double miniP = m->MinimizeP(Jets);
-    double tempminscales[4] = {m->InterScalesArray[0],m->InterScalesArray[1],m->InterScalesArray[2],m->InterScalesArray[3]};
+    double tempminscales[4] = {m->InterScalesVector[0],m->InterScalesVector[1],m->InterScalesVector[2],m->InterScalesVector[3]};
     scales = tempminscales;
     vector<double> miniScales = m->MinimizedScales;
     TLorentzVector miniNeutrino;
-    vector<double> miniPs = m->GetPs(miniNeutrino);
+    vector<double> miniPs = m->ReCalcPs(miniNeutrino);
     // cout << Form("Minscales: %f, %f, %f,%f",scales[0],scales[1],scales[2],scales[3] )<<endl;
     //After Minimizer
 
@@ -211,7 +212,8 @@ void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
       MinLepWMass->Fill(lepw);
       MinHadTMass->Fill(hadt);
       MinLepTMass->Fill(lept);
-      MinPDis->Fill(plepw*plept*phadw*phadt);
+      // MinPDis->Fill(plepw*plept*phadw*phadt);
+      MinPDis->Fill(miniP);
 
       if (output_) {
         cout << "------After Scale------" <<endl;
@@ -221,7 +223,7 @@ void GenMinimizeTest(int SampleType = 0, int irun = 1, int debug = 0) {
         cout << Form("Scales are: %f, %f, %f, %f", scales[0], scales[1], scales[2], scales[3]) << endl;
         cout << Form("PScale = %f, PHad = %f, PLep = %f, P = %f",PScale,PHad, PLep, Prob)<<endl;
         cout << "Minimizer gives:" <<endl;
-        cout << Form("PScale = %f, PHad = %f, PLep = %f, P = %f",PScale, InterPHad, InterPLep, InterProb)<<endl;
+        cout << Form("PScale = %f, PHad = %f, PLep = %f, P = %f",PScale, InterPHad, InterPLep, 1. - InterProb)<<endl;
         cout << "------Direct Mini-----" <<endl;
         cout << Form("MinValue = %f",miniP) <<endl;
         cout << Form("Scales are: %f, %f, %f, %f", miniScales[0], miniScales[1], miniScales[2], miniScales[3]) <<endl;
