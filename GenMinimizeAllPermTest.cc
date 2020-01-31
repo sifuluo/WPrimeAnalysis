@@ -23,7 +23,7 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
   //SetUpUtilities
   Analyzer *a = new Analyzer(SampleType, irun, 30);
   TString savepath = "results/";
-  TString savename = "MinimizerAllPerm4Test";
+  TString savename = "MinimizerAllPerm4BTagTest";
 
 
   JESTools *b = new JESTools();
@@ -76,23 +76,27 @@ void GenMinimizeAllPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
     TLorentzVector Lepton = a->LVGenLep;
     TLorentzVector LVMET = a->LVGenNeu;
     m->SetLep(Lepton, LVMET);
+    vector<bool> BTags{0,0,1,1};
 
     double RightP = 0;
     double BestP = 0;
     int BestPerm = 0;
     for (unsigned iperm = 0; iperm < perms.size(); ++iperm) {
       vector<int> thisperm = perms.at(iperm);
+      double PBTag = b->CalcPFlavor(thisperm, BTags);
       vector<TLorentzVector> Jets;
       for (unsigned ip = 0; ip < thisperm.size(); ++ip) {
         Jets.push_back(AllJets.at(thisperm.at(ip)));
       }
       double ThisP = m->MinimizeP(Jets);
+      ThisP *= PBTag;
       if (iperm == 0) RightP = ThisP;
       if (ThisP > BestP) {
         BestP = ThisP;
         BestPerm = iperm;
       }
     }
+
     RightPermP->Fill(RightP);
     BestPermP->Fill(BestP);
     PermChoice->Fill(BestPerm);
