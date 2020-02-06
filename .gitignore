@@ -1,0 +1,7 @@
+*.pdf
+results/*
+plots/*
+beforeAug25/*
+PFile/*
+slurmlog/*
+tests/*

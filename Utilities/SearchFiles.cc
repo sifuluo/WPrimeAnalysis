@@ -35,16 +35,20 @@ bool fileexists (const TString& name) {
 vector<TString> SearchFiles(int SampleType = 0, int irun = 0, bool report = true) {
   // Parsing Inputs
   vector<TString> samplebasepaths;
-  samplebasepaths.push_back("/fdata/hepx/store/user/aoverton0342/madGraph/ak4/");
+  // samplebasepaths.push_back("/fdata/hepx/store/user/aoverton0342/madGraph/ak4/");
+  samplebasepaths.push_back("/eos/user/s/siluo/samples/");
   vector<TString> folders;
   if (SampleType == 0) {
-    folders.push_back("TDual_FormerLeptonic/");
+    // folders.push_back("TDual_FormerLeptonic/");
+    folders.push_back("FL/");
   }
   else if (SampleType == 1) {
-    folders.push_back("TDual_LatterLeptonic/");
+    // folders.push_back("TDual_LatterLeptonic/");
+    folders.push_back("LL/");
   }
   else {
-    folders.push_back("ttbar/");
+    // folders.push_back("ttbar/");
+    folders.push_back("BG/");
   }
 
   // Finding files
@@ -53,8 +57,9 @@ vector<TString> SearchFiles(int SampleType = 0, int irun = 0, bool report = true
     for (unsigned ifolder = 0; ifolder < folders.size(); ++ifolder){
       if (irun != 0) {
         unsigned itrun = irun;
-        for (unsigned itag = 1; itag < 3; ++itag) {
-          TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag);
+        for (unsigned itag = 1; itag < 2; ++itag) {
+          // TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag);
+          TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i.root",itrun);
           if (fileexists(filename)) {
             fnames.push_back(filename);
           }
@@ -62,16 +67,19 @@ vector<TString> SearchFiles(int SampleType = 0, int irun = 0, bool report = true
       }
       else {
         unsigned itrun = 1;
-        TString runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i",itrun);
+        // TString runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i",itrun);
+        TString runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i.root",itrun);
         while (fileexists(runname)){
           for (unsigned itag = 1; itag < 3; ++itag) {
-            TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag );
+            // TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag );
+            TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i.root",itrun);
             if (fileexists(filename)) {
               fnames.push_back(filename);
             }
           }
           itrun++;
-          runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i",itrun);
+          // runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i",itrun);
+          runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i.root",itrun);
         }
       }
     }
