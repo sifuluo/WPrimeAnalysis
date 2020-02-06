@@ -5,3 +5,5 @@ beforeAug25/*
 PFile/*
 slurmlog/*
 tests/*
+batchlogs/*
+testsub.sub

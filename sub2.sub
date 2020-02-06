@@ -1,0 +1,11 @@
+executable   = Submit.sh
+SampleType   = 2
+arguments    = $(SampleType) $(ProcID)
+output       = batchlogs/$(ClusterID)_$(SampleType)_$(ProcID).out
+error        = batchlogs/$(ClusterID)_$(SampleType)_$(ProcID).err
+log          = batchlogs/$(ClusterID)_$(SampleType)_$(ProcID).log
+universe     = vanilla
+Requirements = (OpSysAndVer =?= "CentOS7")
++JobFlavour  = "workday"
+RequestCpus  = 2
+queue 175
