@@ -27,12 +27,12 @@ using namespace std;
 void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
   Analyzer *a = new Analyzer(SampleType, irun, 30);
   JESTools *b = new JESTools();
-  TString savepath = "PFile/";
+  TString savepath = "NewPFile/";
   TString savename = "PFile";
   a->SetOutput(savepath,savename);
   a->DebugMode(debug);
 
-  b->MakeJES();
+  b->MakeJESPlots();
   TProfile2D *pJetProfile2D = new TProfile2D("pJetProfile2D","Jet Response TProfile2D; recoPt; recoEta", 600, 0, 300, 60, 0, 6.0);
   vector<TProfile*> pJetProfiles;
   for (unsigned i = 0; i < b->EtaBins().size() - 1; ++i) {
@@ -42,6 +42,7 @@ void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
     copy(bins.begin(),bins.end(),arr);
     pJetProfiles.push_back(new TProfile(Form("pJetProfile_%d",i),"Jet Response Profile; recoPt;genPt / recoPt",nb-1,arr,"S"));
   }
+  b->MakeAdditionalPlots();
   for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
     a->ReadEvent(entry);
     // a->AssignGenParticles();
@@ -59,11 +60,15 @@ void MakePFile(int SampleType = 0, int irun = 0, int debug = -2) {
       if (jetpt < 30) continue;
       pair<int,int> bins = b->CalcBins(jeteta,jetpt);
       double rsp = lvgen.Pt() / jetpt;
-      b->FillPlot(rsp, bins.first, bins.second);
+      b->FillJESPlot(rsp, bins.first, bins.second);
       pJetProfile2D->Fill(jetpt,jeteta,rsp);
       pJetProfiles[bins.first]->Fill(jetpt,rsp);
 
     }
+    if (SampleType == 2) continue;
+    if (a->AssignGenParticles() == -1) continue;
+    double dr = a->LVGenWPB.DeltaR(a->LVGenWPT);
+    b->AddVector.at(0)->Fill(dr);
 
   }
 

@@ -35,9 +35,9 @@ void GenMinimizeBestPermTest(int SampleType = 0, int irun = 1, int debug = 0) {
 
   a->SetOutput(savepath,savename);
   a->DebugMode(debug);
-  m->SetDebug(0);
+  m->SetDebug(1);
   m->SetTempOutput(1);
-  bool output_ = false;
+  bool output_ = true;
 
   TH1F* GenHadWMass = new TH1F("GenHadWMass","GenHadWMass", 300,50., 110.);
   TH1F* GenLepWMass = new TH1F("GenLepWMass","GenLepWMass", 300,50., 110.);

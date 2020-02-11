@@ -39,6 +39,8 @@ public:
 
   vector< vector<TH1F*> > JESVector;
 
+  vector<TH1F*> AddVector;
+
   vector< vector<TF1*> > JESFuncVector;
 
 
@@ -126,7 +128,12 @@ public:
     return TempiPt;
   }
 
-  vector< vector<TH1F*> > MakeJESPlots(){
+  TH1F* GetPlot() {
+    TempHist = JESVector.at(TempiEta).at(TempiPt);
+    return TempHist;
+  }
+
+  vector< vector<TH1F*> > MakeJESPlots() {
     vector<vector <TH1F*> > jes;
     jes.clear();
     for (unsigned ieta = 0; ieta < EtaBins().size()-1; ++ieta) {
@@ -143,22 +150,28 @@ public:
     return jes;
   }
 
-  TH1F* GetPlot() {
-    TempHist = JESVector.at(TempiEta).at(TempiPt);
-    return TempHist;
+  vector<TH1F*> MakeAdditionalPlots() {
+    vector<TH1F*> addvec;
+    addvec.clear();
+    addvec.push_back(new TH1F("Add1","DeltaR of WP's daughters",100,0,10));
+    AddVector = addvec;
+    return addvec;
   }
 
-  void FillPlot(double fill, int ieta_, int ipt_) {
+  void FillJESPlot(double fill, int ieta_, int ipt_) {
     JESVector.at(ieta_).at(ipt_)->Fill(fill);
   }
+
 
   //Below is for Minimizer Interface
   vector< vector<TH1F*> > ReadJESPlots(TFile* f) {
     SetUpMassFunctions();
     vector< vector<TH1F*> > jes;
     vector< vector<TF1*> > fjes;
+    vector< TH1F* > addvec;
     jes.clear();
     fjes.clear();
+    addvec.clear();
     for (unsigned ieta = 0; ieta < EtaBins().size()-1; ++ieta) {
       vector<TH1F*> jeseta;
       vector<TF1*> fjeseta;
@@ -181,6 +194,15 @@ public:
     JESVector = jes;
     JESFuncVector = fjes;
     cout << "Finished Fitting" <<endl;
+
+    //Reading Addtional Plots
+    for (unsigned iplot = 0; iplot < 1; ++iplot) {
+      TString pn = Form("Add%d",iplot);
+      TH1F* h1 = (TH1F*)(f->Get(pn));
+      h1->Scale(1./ h1->GetMaximum());
+      addvec.push_back(h1);
+    }
+    AddVector = addvec;
     return jes;
   }
 
@@ -245,6 +267,15 @@ public:
     return bperm;
   }
 
+  double CalcPWPB(TLorentzVector wpb, TLorentzVector wpt) {
+    double dr = wpb.DeltaR(wpt);
+    TH1F* hist = AddVector.at(0);
+    double n = hist->GetBinContent(hist->FindBin(dr));
+    double norm = hist->GetBinContent(hist->GetMaximumBin());
+    double p = n / norm;
+    return p;
+  }
+
   double CalcPFlavor(vector<int> perm_, vector<bool> BTags_) {
     const double RNBMTag(0.01), RNBTag(0.99), RBMTag(0.3), RBTag(0.7);
     double pf = 1;
@@ -274,7 +305,7 @@ public:
     // permlv.push_back(LVMET);
     return permlv;
   }
-  //Forminimizer
+  //For minimizer
 
   double SolveNeutrinos(TLorentzVector LVLep, TLorentzVector ScaledMET, vector<TLorentzVector>& LVNeu_, bool debug_ = false) {
     bool debug = debug_;

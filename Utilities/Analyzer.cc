@@ -72,6 +72,10 @@ void Analyzer::SetOutput(TString outputfolder, TString outputname) {
   logfile << "Log Started" <<endl;
 }
 
+void Analyzer::CDOut() {
+  ofile->cd();
+}
+
 void Analyzer::SetJetPtThreshold(double pt) {
   JetPtThreshold = pt;
 }

@@ -60,7 +60,7 @@ public:
     double PNeutrino = b->SolveNeutrinos(Lepton, ScaledMET, Neutrinos);
     InterPNeutrino = PNeutrino;
     if (PNeutrino < 0) {
-      return ((-1.0) * PNeutrino);
+      return ((-1.0) * PNeutrino + 1);
     }
 
     //Calculation of P on hadronic side
@@ -92,6 +92,13 @@ public:
       InterNeutrino = Neutrino;
       vector<double> tempp{PScale,PHad,PLep,Prob};
       InterProbs = tempp;
+    }
+
+    if (RedoOutput) {
+      RedoParticles.clear();
+      RedoParticles = ScaledJets;
+      RedoParticles.push_back(Lepton);
+      RedoParticles.push_back(Neutrino);
     }
 
     //Outputs for debugging
@@ -197,10 +204,16 @@ public:
     return b->ScaleJets(Jets, MinimizedScalesArray, LVMET, met_ );
   }
 
-  vector<double> ReCalcPs(TLorentzVector &Neutrino) {
-    double PScale = b->CalcPScalesFunc(Jets, MinimizedScalesArray);
+  // vector<TLorentzVector> MinimizedParticles() {
+  //   RedoOutput = 1;
+  //   CalcP(MinimizedScalesArray);
+  //   RedoOutput = 0;
+  //   return RedoParticles;
+  // }
 
-    TLorentzVector ScaledMET;
+  vector<double> ReCalcP(vector<TLorentzVector> &Particles) {
+    double PScale = b->CalcPScalesFunc(Jets, MinimizedScalesArray);
+    TLorentzVector ScaledMET, Neutrino;
     vector<TLorentzVector> ScaledJets = b->ScaleJets(Jets, MinimizedScalesArray, LVMET, ScaledMET);
 
     vector<TLorentzVector> Neutrinos;
@@ -218,6 +231,11 @@ public:
     }
 
     vector<double> Probs{PScale, PHad, PLep, radical};
+    vector<TLorentzVector> parts = ScaledJets;
+    parts.push_back(Lepton);
+    parts.push_back(Neutrino);
+
+    Particles = parts;
 
     return Probs;
   }
@@ -233,7 +251,7 @@ public:
   //Outputs
   double * MinimizedScalesArray = new double[4];
   vector<double> MinimizedScales;
-  vector<TLorentzVector> MinizedJets;
+  static vector<TLorentzVector> RedoParticles;
 
 private:
   static JESTools *b; // Base tool
@@ -250,6 +268,7 @@ private:
   // static TLorentzVector Neutrino;
   static int debug;
   static int TempOutput;
+  static int RedoOutput;
   static int FunctionCalls;
 };
 
@@ -270,8 +289,11 @@ TLorentzVector ROOTMini::InterNeutrino;
 vector<double> ROOTMini::InterProbs;
 double ROOTMini::InterPNeutrino;
 
+vector<TLorentzVector> ROOTMini::RedoParticles;
+
 // TLorentzVector ROOTMini::Neutrino;
 int ROOTMini::debug = 0;
 int ROOTMini::TempOutput = 0;
+int ROOTMini::RedoOutput = 0;
 
 #endif

@@ -43,6 +43,7 @@ public:
   void ProcessEntries(int nprocess);
   void SetEndEntry(int endentry);
   void SetOutput(TString outputfolder, TString outputname);
+  void CDOut();
   void SetJetPtThreshold(double pt);
   Long64_t GetEntries();
   Long64_t GetStartEntry();
