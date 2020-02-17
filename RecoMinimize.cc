@@ -27,7 +27,7 @@ void RecoMinimize(int SampleType = 0, int irun = 1, int testmode = 0) {
 
 
   JESTools *b = new JESTools();
-  TFile* PFile = new TFile("PFile/PFile.root");
+  TFile* PFile = new TFile("NewPFile/PFile.root");
   b->ReadJESPlots(PFile);
   ROOTMini *m = new ROOTMini(b);
   // m->SetMinimizer();
@@ -51,7 +51,7 @@ void RecoMinimize(int SampleType = 0, int irun = 1, int testmode = 0) {
   for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
     a->ReadEvent(entry);
     // if (a->AssignGenParticles() == -1) continue;
-    if (RecoPass == -1) continue; //lepton != 1, jet < 5 : discard
+    if (a->RecoPass == -1) continue; //lepton != 1, jet < 5 : discard
 
     //Set up inputs
     vector<TLorentzVector> Jets = a->LVJets;

@@ -154,6 +154,8 @@ public:
     vector<TH1F*> addvec;
     addvec.clear();
     addvec.push_back(new TH1F("Add1","DeltaR of WP's daughters",100,0,10));
+    addvec.push_back(new TH1F("Add2","DPhi of WP's daughters",40,0,4));
+    addvec.push_back(new TH1F("Add3","W'b Pt",500,0,1000));
     AddVector = addvec;
     return addvec;
   }
@@ -196,12 +198,13 @@ public:
     cout << "Finished Fitting" <<endl;
 
     //Reading Addtional Plots
-    for (unsigned iplot = 0; iplot < 1; ++iplot) {
+    for (unsigned iplot = 1; iplot < 2; ++iplot) {
       TString pn = Form("Add%d",iplot);
       TH1F* h1 = (TH1F*)(f->Get(pn));
       h1->Scale(1./ h1->GetMaximum());
       addvec.push_back(h1);
     }
+    cout << "read" <<endl;
     AddVector = addvec;
     return jes;
   }
