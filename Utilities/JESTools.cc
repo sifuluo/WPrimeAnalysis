@@ -37,6 +37,8 @@ public:
   TF1* TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
   TF1* WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
 
+  TFile* JESFile;
+
   vector< vector<TH1F*> > JESVector;
 
   vector<TH1F*> AddVector;
@@ -150,30 +152,19 @@ public:
     return jes;
   }
 
-  vector<TH1F*> MakeAdditionalPlots() {
-    vector<TH1F*> addvec;
-    addvec.clear();
-    addvec.push_back(new TH1F("Add1","DeltaR of WP's daughters",100,0,10));
-    addvec.push_back(new TH1F("Add2","DPhi of WP's daughters",40,0,4));
-    addvec.push_back(new TH1F("Add3","W'b Pt",500,0,1000));
-    AddVector = addvec;
-    return addvec;
-  }
-
   void FillJESPlot(double fill, int ieta_, int ipt_) {
     JESVector.at(ieta_).at(ipt_)->Fill(fill);
   }
 
 
   //Below is for Minimizer Interface
-  vector< vector<TH1F*> > ReadJESPlots(TFile* f) {
+  vector< vector<TH1F*> > ReadJESPlots(TFile* f_) {
+    JESFile = f_;
     SetUpMassFunctions();
     vector< vector<TH1F*> > jes;
     vector< vector<TF1*> > fjes;
-    vector< TH1F* > addvec;
     jes.clear();
     fjes.clear();
-    addvec.clear();
     for (unsigned ieta = 0; ieta < EtaBins().size()-1; ++ieta) {
       vector<TH1F*> jeseta;
       vector<TF1*> fjeseta;
@@ -181,7 +172,7 @@ public:
       fjeseta.clear();
       for (unsigned ipt = 0; ipt < PtBins(ieta).size() -1; ++ipt){
         TString sn = Form("eta%d_pt%d", ieta, ipt);
-        TH1F* h1 = (TH1F*)(f->Get(sn));
+        TH1F* h1 = (TH1F*)(f_->Get(sn));
         jeseta.push_back(h1); //Histogram might not be accessible after TFile being closed
         //Fitting histogram
         TString fsn = Form("f_eta%d_pt%d", ieta, ipt);
@@ -196,16 +187,6 @@ public:
     JESVector = jes;
     JESFuncVector = fjes;
     cout << "Finished Fitting" <<endl;
-
-    //Reading Addtional Plots
-    for (unsigned iplot = 1; iplot < 2; ++iplot) {
-      TString pn = Form("Add%d",iplot);
-      TH1F* h1 = (TH1F*)(f->Get(pn));
-      h1->Scale(1./ h1->GetMaximum());
-      addvec.push_back(h1);
-    }
-    cout << "read" <<endl;
-    AddVector = addvec;
     return jes;
   }
 
@@ -295,6 +276,24 @@ public:
       else pf *= RBMTag; // b-jet tagged to be a non-b;
     }
     double max = 0.7*0.7*0.99*0.99;
+    pf = pf / max;
+    return pf;
+  }
+
+  double CalcBTag(int it, vector<bool> BTags_, bool isB = true) {
+    const double RNBMTag(0.01), RNBTag(0.99), RBMTag(0.3), RBTag(0.7);
+    double pf = 1;
+    double max = 1;
+    if (isB) {
+      max = RBTag;
+      if (BTags_.at(it)) pf *= RBTag;
+      else pf *= RBMTag;
+    }
+    else {
+      max = RNBTag;
+      if (BTags_.at(it)) pf *= RNBMTag;
+      else pf *= RNBTag;
+    }
     pf = pf / max;
     return pf;
   }

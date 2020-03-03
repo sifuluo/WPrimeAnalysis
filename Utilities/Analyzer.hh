@@ -5,8 +5,8 @@
 #include "ProgressBar.cc"
 #include "JetMatch.cc"
 #include "GetPID.cc"
-#include "JetMatch.cc"
-// #include "Optimizer.cc"
+// #include "ROOTMini.cc"
+// #include "JESTools.cc"
 
 // Delphes
 #include "classes/DelphesClasses.h"
@@ -77,6 +77,7 @@ public:
   vector<TLorentzVector> LVAllJets, LVJets, LVBJets, LVNBJets, LVElectrons, LVMuons, LVLeptons, LVSoftLep, LVOutPart, LVGenJets;
   vector<bool> BTags;
   vector<int> GenD, GenU, GenS, GenC, GenB, GenT, GenE, GenNuE, GenMu, GenNuMu, GenTau, GenG, GenGamma, GenW, GenWP, GenOutQuark, GenOutGluon;
+  vector<bool> GenOutBTags;
   TLorentzVector LVMET;
 
   // Assigning Gen Particles
@@ -97,7 +98,9 @@ public:
   vector<TLorentzVector> RecoHypothesis;
   int MatchedHypo = 0;
 
-
+  // double CalcBTag(int it);
+  // double CalcBTags(vector<int> perm);
+  // void SetUpMinimizer();
 
 
 

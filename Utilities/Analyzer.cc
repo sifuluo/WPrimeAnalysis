@@ -142,6 +142,7 @@ void Analyzer::GetInfos() {
   }
   for (unsigned igl = 0; igl < GenOutGluon.size(); ++igl) {
     LVOutPart.push_back(GenParticles[ToBeHadron(GenOutGluon[igl])]->P4());
+    GenOutBTags.push_back(false);
   }
 
   AllJets.clear();
@@ -226,6 +227,7 @@ void Analyzer::GenParticleTypes() {
   GenWP.clear();
   GenOutQuark.clear();
   GenOutGluon.clear();
+  GenOutBTags.clear();
   for (int igen = 0; igen < branchGen->GetEntries(); ++igen) {
     GenParticle* genp = GenParticles[igen];
     if (genp->Status > 20 && genp->Status < 30) {
@@ -250,6 +252,8 @@ void Analyzer::GenParticleTypes() {
       if ( (genp->Status == 23 || genp->Status ==24) ) {
         if (pid <7 ) {
           GenOutQuark.push_back(igen);
+          if (pid == 5) GenOutBTags.push_back(true);
+          else GenOutBTags.push_back(false);
         }
         if (pid == 21) {
           GenOutGluon.push_back(igen);

@@ -1,5 +1,6 @@
 #include "Utilities/Analyzer.cc"
 #include "Utilities/JESTools.cc"
+#include "Utilities/GenTools.cc"
 #include "Utilities/ROOTMini.cc"
 
 // Delphes
@@ -27,8 +28,9 @@ void RecoMinimize(int SampleType = 0, int irun = 1, int testmode = 0) {
 
 
   JESTools *b = new JESTools();
-  TFile* PFile = new TFile("NewPFile/PFile.root");
-  b->ReadJESPlots(PFile);
+  GenTools *g = new GenTools("PFile","GenFile");
+  TFile* JESFile = new TFile("PFile/JESFile.root");
+  b->ReadJESPlots(JESFile);
   ROOTMini *m = new ROOTMini(b);
   // m->SetMinimizer();
 
@@ -69,17 +71,37 @@ void RecoMinimize(int SampleType = 0, int irun = 1, int testmode = 0) {
     BestParticles.clear();
     for (unsigned iperm = 0; iperm < perms.size(); ++iperm) {
       vector<int> thisperm = perms.at(iperm);
-      double PBTag = b->CalcPFlavor(thisperm, BTags);
+      double PBTags = b->CalcPFlavor(thisperm, BTags);
       vector<TLorentzVector> PermJets = b->GetPermutationLV(thisperm, Jets);
       double PermP = m->MinimizeP(PermJets);
       if (PermP == -1) continue;
-      PermP *= PBTag;
+      PermP *= PBTags;
 
       //Start to deal with W'B
       vector<TLorentzVector> PermParticles;
       m->ReCalcP(PermParticles);
       TLorentzVector hadt = PermParticles[0]+PermParticles[1]+PermParticles[2];
       TLorentzVector lept = PermParticles[3]+PermParticles[4]+PermParticles[5];
+
+      // Probability to be samples by Tops
+      double pTopFL = 1.;
+      double pTopLL = 1.;
+      double pTopBG = 1.; // Background likelihood correction
+
+      double topdr = hadt.DeltaR(lept);
+      pTopFL *= g->CalcP("TopdR",topdr,0);
+      pTopLL *= g->CalcP("TopdR",topdr,1);
+      pTopBG *= g->CalcP("TopdR",topdr,2);
+
+      double topptdiff = hadt.Pt() - lept.Pt();
+      pTopFL *= g->CalcP("TopPtDiff",topptdiff,0);
+      pTopLL *= g->CalcP("TopPtDiff",topptdiff,1);
+      pTopBG *= g->CalcP("TopPtDiff",topptdiff,2);
+
+      pTopFL *= pTopBG;
+      pTopLL *= pTopBG;
+
+      // W'b Searching
       vector<int> WPBCand = b->FindWPB(Jets.size(),thisperm);
       // Processing variables
       double PermPWPB = -1;
@@ -91,8 +113,11 @@ void RecoMinimize(int SampleType = 0, int irun = 1, int testmode = 0) {
         double thispwpb;
         int thisflag;
         TLorentzVector ThisWPB = Jets.at(WPBCand.at(iwpb));
-        double phadwpb = b->CalcPWPB(ThisWPB, hadt);
-        double plepwpb = b->CalcPWPB(ThisWPB, lept);
+        double pWPBTag = b->CalcBTag(iwpb, BTags, true);
+        double phadwpb = g->CalcP("WPdPhi",ThisWPB.DeltaPhi(hadt),0) * g->CalcP("WPBPt",ThisWPB.Pt(),0);
+        phadwpb *= pTopFL * pWPBTag;
+        double plepwpb = g->CalcP("WPdPhi",ThisWPB.DeltaPhi(lept),1) * g->CalcP("WPBPt",ThisWPB.Pt(),1);
+        plepwpb *= pTopLL * pWPBTag;
         if (phadwpb > plepwpb) {
           thisflag = 0;
           thispwpb = phadwpb;
@@ -111,6 +136,7 @@ void RecoMinimize(int SampleType = 0, int irun = 1, int testmode = 0) {
       //WPB for this permutation is calculated
       PermParticles.push_back(LVPermWPB);
       PermP *= PermPWPB;
+      // PermParticles orders as LFJet1, LFjet2, HadB, LepB, lepton, neutrino, w'b
 
       // if (iperm == 0 ) BestProb = PermP;
       if (PermP > BestProb || iperm == 0) {
