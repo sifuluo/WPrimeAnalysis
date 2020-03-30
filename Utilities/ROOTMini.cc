@@ -236,7 +236,7 @@ public:
     parts.push_back(Neutrino);
 
     Particles = parts;
-
+    //parts are LFJet1, LFJet2, HadB, LepB, Lepton, Neutrino
     return Probs;
   }
 
