@@ -165,7 +165,7 @@ void GenTemplateTest(int SampleType = 0, int irun = 1, int debug = 0) {
         double pWPb = 1;
         int wpbflag = -1;
         TLorentzVector LVWPb = Jets.at(WPBCand.at(iwpb));
-        double pWPBTag = j->CalcBTag(iwpb, BTags, true);
+        double pWPBTag = j->CalcBTag(WPBCand.at(iwpb), BTags, true);
         double pWPBFL = g1->CalcP("WPBPt",LVWPb.Pt(),0) * g2->CalcP("WPdPhi", fabs(LVWPb.DeltaPhi(hadt)),0) * pTopFL;
         double pWPBLL = g1->CalcP("WPBPt",LVWPb.Pt(),1) * g2->CalcP("WPdPhi", fabs(LVWPb.DeltaPhi(hadt)),1) * pTopLL;
         if (pWPBFL > pWPBLL) {
