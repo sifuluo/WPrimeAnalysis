@@ -424,6 +424,14 @@ int Analyzer::ToBeHadron(int igen) {
   return igen;
 }
 
+void Analyzer::AddPlot(TH1F* hh_) {
+  Plots1D[hh_->GetName()] = hh_;
+}
+
+void Analyzer::AddPlot(TH2F* hh_) {
+  Plots2D[hh_->GetName()] = hh_;
+}
+
 int Analyzer::AssignGenParticles() {
   if (GenW.size() !=2 || LVLeptons.size() !=1) return -1;
   if (SampleType == 2) {
@@ -512,7 +520,7 @@ int Analyzer::AssignGenParticles() {
     if (GenOutSort[i] == -1) LVGenOutSort.push_back(TLorentzVector());
     else LVGenOutSort.push_back(GenParticles[ToBeHadron(GenOutSort[i])]->P4());
   }
-  // GenOutSort Sequence: Light flavor parton, Hadronic B, Leptonic B, W' B
+  // GenOutSort Sequence: Light flavor parton (0,1), Hadronic B(2), Leptonic B(3), W' B(4)
 
   if (SampleType == 0) {
     GenWPT = GenHadT;
@@ -551,10 +559,55 @@ TLorentzVector Analyzer::GetGenParticleP4(int igen) {
   return GenParticles[igen]->P4();
 }
 
+void Analyzer::SetupGenTools() {
+  GT1 = new GenTools("PFile", "GenFileL1");
+  GT2 = new GenTools("PFile", "GenFileL2");
+}
+
+void Analyzer::SetupJESTools() {
+  JT = new JESTools();
+  JESFile = new TFile("PFile/JESFile.root");
+  JT->ReadJESPlots(JESFile);
+}
+
+void Analyzer::SetupROOTMini() {
+  SetupJESTools();
+  RM = new ROOTMini(JT);
+  RM->SetDebug(0);
+}
+
 void Analyzer::MatchJets(){
   JetMatchMap.clear();
   JetMatchMap = AdvJetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR, 2.0, true, false, true);
+  SimpleJetMatchMap.clear();
+  SimpleJetMatchMap = JetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR);
   // AdvJetMatch(genLV, recoLV, max deltaR in the match, cut at larger than AlgodR = 0.2, if skip all gen LV with pt < 30, if skip all reco pt < 30)
+}
+
+void Analyzer::GetGenCorrectPerm() {
+  GenCorrectPerm.clear();
+  for (unsigned i = 0; i < GenOutSort.size(); ++i) {
+    int hypo = GenOutSort.at(i);
+    if (hypo == -1) {
+      GenCorrectPerm.push_back(-1);
+      continue;
+    }
+    for (unsigned j = 0; j < GenOutQuark.size(); ++j) {
+      if (GenOutQuark[j] == hypo) {
+        GenCorrectPerm.push_back(j);
+        break;
+      }
+    }
+  }
+}
+
+void Analyzer::GetRecoCorrectPerm() {
+  RecoCorrectPerm.clear();
+  GetGenCorrectPerm();
+  MatchJets();
+  for (unsigned it = 0; it < GenCorrectPerm.size(); ++it) {
+    RecoCorrectPerm.push_back(SimpleJetMatchMap[GenCorrectPerm.at(it)]);
+  }
 }
 
 void Analyzer::GetRecoHypothesis(){

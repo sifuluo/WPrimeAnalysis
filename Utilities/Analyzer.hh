@@ -5,8 +5,9 @@
 #include "ProgressBar.cc"
 #include "JetMatch.cc"
 #include "GetPID.cc"
-// #include "ROOTMini.cc"
-// #include "JESTools.cc"
+#include "ROOTMini.cc"
+#include "JESTools.cc"
+#include "GenTools.cc"
 
 // Delphes
 #include "classes/DelphesClasses.h"
@@ -51,6 +52,7 @@ public:
   void DebugMode(int debug);
   void SaveOutput();
   int SampleType;
+  Long64_t nEntries, iEntry, StartEntry, EndEntry;
   // 0 for TDual_FormerLeptonic; 1 for TDual_LatterLeptonic; 2 for TTBar
   ofstream logfile;
 
@@ -80,6 +82,12 @@ public:
   vector<bool> GenOutBTags;
   TLorentzVector LVMET;
 
+  // Prepare plots
+  void AddPlot(TH1F* hh_);
+  void AddPlot(TH2F* hh_);
+  map<string, TH1F*> Plots1D;
+  map<string, TH2F*> Plots2D;
+
   // Assigning Gen Particles
   int AssignGenParticles();
   int WP, GenWPB, GenHadT, GenHadB, GenHadW, GenLepT, GenLepB, GenLepW, GenLep, GenNeu;
@@ -91,9 +99,24 @@ public:
 
   TLorentzVector GetGenParticleP4(int igen);
 
-  void MatchJets();
-  map<int, vector<int> > JetMatchMap;
+  GenTools *GT1, *GT2;
+  void SetupGenTools();
+
+  JESTools *JT;
+  TFile* JESFile;
+  void SetupJESTools();
+
+  ROOTMini *RM;
+  void SetupROOTMini();
+
   double JetMatchMaxDeltaR;
+  void MatchJets();
+  map<int, vector<int> > JetMatchMap; // map of indices of LVOutPart and LVJets
+  map<int, int> SimpleJetMatchMap;
+  void GetGenCorrectPerm();
+  vector<int> GenCorrectPerm; // correct set of indices in LVOutPart/GenOutQuark in the order of hypothesis
+  void GetRecoCorrectPerm();
+  vector<int> RecoCorrectPerm;
   void GetRecoHypothesis();
   vector<TLorentzVector> RecoHypothesis;
   int MatchedHypo = 0;
@@ -110,7 +133,6 @@ private:
   TFile *ofile;
   TChain* chain_;
   TString OutputName, OutputLogName;
-  Long64_t nEntries, iEntry, StartEntry, EndEntry;
   double JetPtThreshold, AlgodR;
   bool verbose;
   int debug;

@@ -28,7 +28,7 @@ pair<int,int> FindMatrixMin(vector< vector<double> > &matrix, vector<int> &list1
   return pair<int,int>(ml1,ml2);
 }
 
-map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut, bool FilterSoftGen, bool FilterSoft) {
+map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true, bool FilterSoftGen = false, bool FilterSoft = true) {
   bool testmodule = false;
   vector<int> l1, l2;
   for (unsigned il = 0; il < v1.size(); ++il) {
