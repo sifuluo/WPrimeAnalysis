@@ -58,6 +58,8 @@ public:
 
   // Initialize Event
   void ReadEvent(Int_t ievt);
+  void CountEvent(TString lbl);
+  vector<TString> CounterLabels;
   void GetInfos();
   void GenParticleTypes();
   TString GenParticleInfo(int iGen);
@@ -121,9 +123,7 @@ public:
   vector<TLorentzVector> RecoHypothesis;
   int MatchedHypo = 0;
 
-  // double CalcBTag(int it);
-  // double CalcBTags(vector<int> perm);
-  // void SetUpMinimizer();
+  pair<double, vector<TLorentzVector> > SolveTTbar(vector<TLorentzVector> jets_, vector<bool> btags_, vector<int> &bestperm_);
 
 
 

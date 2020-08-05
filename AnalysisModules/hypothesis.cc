@@ -1,8 +1,6 @@
-TH1F *EventCounter2 = new TH1F("EventCounter2","Number2 of Events;Passcode",10,-0.5,9.5);
-
 void hypothesis_init(Analyzer *a) {
+  a->CDOut();
   // Particle Numbers
-  a->AddPlot(new TH1F("EventCounter","Number of Events;Passcode",10,-0.5,9.5));
   a->AddPlot(new TH1F("NumberW","Number of W",10,-0.5,9.5));
   a->AddPlot(new TH1F("Numbert","Number of t",10,-0.5,9.5));
   a->AddPlot(new TH1F("Numberb","Number of b",10,-0.5,9.5));
@@ -50,7 +48,7 @@ int hypothesis_loop(Analyzer *a) {
   map<string, TH1F*> p1d = a->Plots1D;
   map<string, TH2F*> p2d = a->Plots2D;
 
-  p1d["EventCounter"]->Fill(0);
+  a->CountEvent("All");
   p1d["NumberW"]->Fill(a->GenW.size());
   p1d["Numbert"]->Fill(a->GenT.size());
   p1d["Numberb"]->Fill(a->GenB.size());
@@ -62,13 +60,13 @@ int hypothesis_loop(Analyzer *a) {
 
   if (a->Jets.size() == 0) return -1;
   if (a->LVLeptons.size() != 1) {
-    p1d["EventCounter"]->Fill(1);
     return -1;
   }
+  a->CountEvent("OneLepton");
 
   if (a->Jets.size() >= 5) {
-    p1d["EventCounter"]->Fill(2);
-    if (a->BJets.size() >=2 ) p1d["EventCounter"]->Fill(3);
+    a->CountEvent("Jets>5");
+    if (a->BJets.size() >=2 ) a->CountEvent("TwoBJets");
   }
 
   if (a->GenPass < 0) return -1;

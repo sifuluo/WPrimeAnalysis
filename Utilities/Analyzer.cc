@@ -68,6 +68,7 @@ void Analyzer::SetOutput(TString outputfolder, TString outputname) {
   TString ofilename = OutputName+".root";
   TString logname = OutputLogName+".txt";
   ofile = new TFile(ofilename,"RECREATE");
+  AddPlot(new TH1F("EventCounter","Number of Events;Passcode",100,0,100));
   logfile.open(logname);
   logfile << "Log Started" <<endl;
 }
@@ -105,6 +106,7 @@ void Analyzer::DebugMode(int debug_ = -2) {
 }
 
 void Analyzer::SaveOutput() {
+  Plots1D["EventCounter"]->GetXaxis()->SetRange(1,CounterLabels.size()+1);
   ofile->Write();
   ofile->Save();
 }
@@ -126,6 +128,15 @@ void Analyzer::ReadEvent(Int_t ievt) {
   // Preselection
   if (LVLeptons.size() != 1 || Jets.size() < 5) RecoPass = -1;
   if ((GenWP.size() != 1 && SampleType != 2) || GenW.size() != 2) GenPass = -1;
+
+  CountEvent("All_Evts");
+}
+
+void Analyzer::CountEvent(TString lbl) {
+  Plots1D["EventCounter"]->Fill(lbl,1);
+  if (iEntry == StartEntry) {
+    CounterLabels.push_back(lbl);
+  }
 }
 
 void Analyzer::GetInfos() {
@@ -571,6 +582,7 @@ void Analyzer::SetupJESTools() {
 }
 
 void Analyzer::SetupROOTMini() {
+  SetupGenTools();
   SetupJESTools();
   RM = new ROOTMini(JT);
   RM->SetDebug(0);
@@ -644,6 +656,30 @@ void Analyzer::GetRecoHypothesis(){
       }
     }
   }
-
 }
+
+pair<double, vector<TLorentzVector> > Analyzer::SolveTTbar(vector<TLorentzVector> jets_, vector<bool> btags_, vector<int>& bestperm_ ) {
+  vector< vector<int> > perms = JT->MakePermutations(jets_.size());
+  double BestP = -1.0;
+  vector<int> BestPerm;
+  vector<TLorentzVector> BestParticles;
+
+  for (unsigned iperm = 0; iperm < perms.size(); ++iperm) {
+    vector<int> thisperm = perms.at(iperm);
+    double PBTags = JT->CalcPFlavor(thisperm, btags_);
+    vector<TLorentzVector> PermJets = JT->GetPermutationLV(thisperm, jets_);
+    if (find(PermJets.begin(),PermJets.end(),TLorentzVector()) != PermJets.end()) continue;
+    double PJes = RM->MinimizeP(PermJets);
+    if (PJes < 0) continue;
+    double PPerm = PJes * PBTags;
+    if (PPerm > BestP) {
+      BestP = PPerm;
+      BestPerm = thisperm;
+      RM->ReCalcP(BestParticles);
+    }
+  }
+  bestperm_ = BestPerm;
+  return pair<double, vector<TLorentzVector> > (BestP, BestParticles);
+}
+
 #endif

@@ -155,6 +155,7 @@ public:
     vector< pair<double, double> > ScaleLimits;
     for (unsigned ij = 0; ij < 4; ++ij) {
       TLorentzVector Jet = Jets.at(ij);
+      if (Jet == TLorentzVector()) return -2;
       pair<double, double> ThisLimits = b->CalcLimitsFunc(Jet.Eta(),Jet.Pt());
       mini->SetLimitedVariable(ij,Form("Scale_%i",ij),1.0,0.01,ThisLimits.first,ThisLimits.second);
     }
