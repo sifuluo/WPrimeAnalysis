@@ -61,7 +61,7 @@ void Analyzer::SetOutput(TString outputfolder, TString outputname) {
   if      (SampleType == 0) outputname += "_FL";
   else if (SampleType == 1) outputname += "_LL";
   else                      outputname += "_BG";
-  if (irun != 0) outputname += Form("_%.2i",irun);
+  if (irun != 0) outputname += Form("_%i",irun);
   if (irun != 0) outputfolder += "massresult/";
   OutputName = outputfolder+outputname;
   OutputLogName = outputfolder+"logs/"+ outputname;
@@ -135,7 +135,7 @@ void Analyzer::ReadEvent(Int_t ievt) {
 void Analyzer::CountEvent(TString lbl) {
   Plots1D["EventCounter"]->Fill(lbl,1);
   if (iEntry == StartEntry) {
-    CounterLabels.push_back(lbl);
+    CounterLabels.insert(lbl);
   }
 }
 

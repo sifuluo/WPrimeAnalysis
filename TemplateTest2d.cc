@@ -28,7 +28,7 @@
 
 using namespace std;
 
-void TemplateTest2d(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = -2) {
+void TemplateTest2d(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 0) {
   int DoReco = OptionCode%10;
   int LeadingAsWPB = OptionCode/10%10;
 
@@ -38,6 +38,7 @@ void TemplateTest2d(int SampleType = 0, int irun = 1, int OptionCode = 0, int de
   TString savename;
   if (DoReco == 0) savename = "GenTemplate2d";
   if (DoReco == 1) savename = "RecoTemplate2d";
+  if (LeadingAsWPB == 1) savename += "_WPB";
   cout << "Running as " << savename <<endl;
 
   a->SetupROOTMini();

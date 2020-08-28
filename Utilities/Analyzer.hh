@@ -59,7 +59,7 @@ public:
   // Initialize Event
   void ReadEvent(Int_t ievt);
   void CountEvent(TString lbl);
-  vector<TString> CounterLabels;
+  set<TString> CounterLabels;
   void GetInfos();
   void GenParticleTypes();
   TString GenParticleInfo(int iGen);

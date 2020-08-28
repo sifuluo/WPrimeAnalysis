@@ -4,9 +4,25 @@ void TemplateTest2d_init(Analyzer *a) {
   a->AddPlot(new TH1F("PTTbar","Best Probability of ttbar hypothesis; Log(P)", 101,-10,0.1));
   a->AddPlot(new TH2F("Probabilities","Best Probabilities; Log(Prob) if FL; Log(Prob) if LL",101,-10,0.1,100,-10,0.1));
   a->AddPlot(new TH1F("WPrimeMassFL","W\' mass Reconstructed As FL",1000,0,1000));
+  a->AddPlot(new TH2F("WPrimeMassFLVsPTTbar","W\' mass Reconstructed As FL Vs P_{TTBar}; W\' mass; Log(P_{TTbar})",1000,0,1000,101,-10,0.1));
   a->AddPlot(new TH1F("WPrimeMassLL","W\' mass Reconstructed As LL",1000,0,1000));
+  a->AddPlot(new TH2F("WPrimeMassLLVsPTTbar","W\' mass Reconstructed As LL Vs P_{TTBar}; W\' mass; Log(P_{TTbar})",1000,0,1000,101,-10,0.1));
   a->AddPlot(new TH1F("WPrimeMassFlagFL","W\' mass Flagged As FL",1000,0,1000));
   a->AddPlot(new TH1F("WPrimeMassFlagLL","W\' mass Flagged As LL",1000,0,1000));
+  a->AddPlot(new TH2F("PTTbarVsPFL","P_{TTbar} Vs P_{FL}; Log(P_{TTbar}); Log(P_{FL})",101,-10,0.1,101,-10,0.1));
+  a->AddPlot(new TH2F("PTTbarVsPLL","P_{TTbar} Vs P_{LL}; Log(P_{TTbar}); Log(P_{LL})",101,-10,0.1,101,-10,0.1));
+  a->AddPlot(new TH1F("RecoHadTopPt","Reco Pt_{hadT}",1000,0,1000));
+  a->AddPlot(new TH1F("RecoLepTopPt","Reco Pt_{LepT}",1000,0,1000));
+  a->AddPlot(new TH1F("GenHadTopPt","Gen Pt_{hadT}",1000,0,1000));
+  a->AddPlot(new TH1F("GenLepTopPt","Gen Pt_{LepT}",1000,0,1000));
+  a->AddPlot(new TH1F("RecoTopPtDiff","Reco Pt_{hadT} - Pt_{LepT}",1000,-500,500));
+  a->AddPlot(new TH1F("GenTopPtDiff","Gen Pt_{hadT} - Pt_{LepT}",1000,-500,500));
+  a->AddPlot(new TH1F("RecoTopdPhi","Reco dPhi_{T}",80,-4,4));
+  a->AddPlot(new TH1F("GenTopdPhi","Gen dPhi_{T}",80,-4,4));
+  a->AddPlot(new TH2F("RecoTopdPhiVsdPt","Reco Tops dPhi Vs dPt; dPt; dPhi",1000,0,1000,80,-4,4));
+  a->AddPlot(new TH2F("GenTopdPhiVsdPt","Gen Tops dPhi Vs dPt; dPt; dPhi",1000,0,1000,80,-4,4));
+  a->AddPlot(new TH1F("PSampleTagDiff","P_{FL} - P_{LL}",200,-1,1));
+
 }
 
 int TemplateTest2d_loop(Analyzer *a, int& DoReco, int LeadingAsWPB = 0) {
@@ -34,7 +50,7 @@ int TemplateTest2d_loop(Analyzer *a, int& DoReco, int LeadingAsWPB = 0) {
     cout << "BTags size = " << BTags.size() <<endl;
   }
   if (Jets.size() < 5) return -1;
-  a->CountEvent(1); // Event Passed selection
+  a->CountEvent("More than 5 Jets"); // Event Passed selection
 
   vector<int> CorrectPerm; // Correct Permutation
   if (DoReco == 0) {
@@ -103,10 +119,25 @@ int TemplateTest2d_loop(Analyzer *a, int& DoReco, int LeadingAsWPB = 0) {
   TLorentzVector LLWp = BestLLWPB + lept;
   double FLWpMass = FLWp.M();
   double LLWpMass = LLWp.M();
+  p1d["RecoHadTopPt"]->Fill(hadt.Pt());
+  p1d["RecoLepTopPt"]->Fill(lept.Pt());
+  p1d["GenHadTopPt"]->Fill(a->LVGenHadT.Pt());
+  p1d["GenLepTopPt"]->Fill(a->LVGenLepT.Pt());
+  p1d["RecoTopPtDiff"]->Fill(hadt.Pt()-lept.Pt());
+  p1d["GenTopPtDiff"]->Fill(a->LVGenHadT.Pt()-a->LVGenLepT.Pt());
+  p1d["RecoTopdPhi"]->Fill(hadt.DeltaPhi(lept));
+  p1d["GenTopdPhi"]->Fill(a->LVGenHadT.DeltaPhi(a->LVGenLepT));
+  p2d["RecoTopdPhiVsdPt"]->Fill(hadt.Pt()-lept.Pt(),hadt.DeltaPhi(lept));
+  p2d["GenTopdPhiVsdPt"]->Fill(a->LVGenHadT.Pt()-a->LVGenLepT.Pt(),a->LVGenHadT.DeltaPhi(a->LVGenLepT));
+  p1d["PSampleTagDiff"]->Fill(BestPFL-BestPLL);
   p2d["WPrimeMasses2D"]->Fill(FLWpMass, LLWpMass);
   p2d["Probabilities"]->Fill(log10(BestP*BestPFL),log10(BestP*BestPLL));
   p1d["WPrimeMassFL"]->Fill(FLWpMass);
+  p2d["WPrimeMassFLVsPTTbar"]->Fill(FLWpMass,log10(BestP));
   p1d["WPrimeMassLL"]->Fill(LLWpMass);
+  p2d["WPrimeMassLLVsPTTbar"]->Fill(LLWpMass,log10(BestP));
+  p2d["PTTbarVsPFL"]->Fill(log10(BestP),log10(BestPFL));
+  p2d["PTTbarVsPLL"]->Fill(log10(BestP),log10(BestPLL));
   int SampleFlag = 0;
   if (BestPLL > BestPFL) SampleFlag = 1;
   if (!SampleFlag) {

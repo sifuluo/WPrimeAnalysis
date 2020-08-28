@@ -359,7 +359,7 @@ public:
     vector<TLorentzVector> ScaledJets;
     ScaledMET = LVMET;
     ScaledJets.clear();
-    for (unsigned ij = 0; ij < 4; ++ij) {
+    for (unsigned ij = 0; ij < lvjets.size(); ++ij) {
       TLorentzVector newjet = lvjets.at(ij) * scales[ij];
       ScaledJets.push_back(newjet);
       ScaledMET = ScaledMET + lvjets.at(ij) - newjet;
@@ -406,7 +406,7 @@ public:
 
   double CalcPScalesHist(vector<TLorentzVector> LVJets_, const double * scales, int debug_ = 0) {
     double PScale = 1;
-    for (unsigned ij = 0; ij < 4; ++ij) {
+    for (unsigned ij = 0; ij < LVJets_.size(); ++ij) {
       PScale *= CalcPScaleHist(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij], debug_);
     }
     return PScale;
@@ -414,7 +414,7 @@ public:
 
   double CalcPScalesFunc(vector<TLorentzVector> LVJets_, const double * scales, int debug_ = 0) {
     double PScale = 1;
-    for (unsigned ij = 0; ij < 4; ++ij) {
+    for (unsigned ij = 0; ij < LVJets_.size(); ++ij) {
       PScale *= CalcPScaleFunc(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij], debug_);
     }
     return PScale;
@@ -438,6 +438,35 @@ public:
 
   double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, TLorentzVector Neu_) {
     return TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
+  }
+
+  // double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, vector<TLorentzVector> Neus_, TLorentzVector &NeuOut) {
+  //   double PLep = 0;
+  //   for (unsigned ineu = 0; ineu < Neus_.size(); ++ineu) {
+  //     TLorentzVector Neu_ = Neus_.at(ineu);
+  //     double PLepTMassTemp = TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
+  //     if (PLepTMassTemp > PLep) {
+  //       PLep = PLepTMassTemp;
+  //       NeuOut = Neu_;
+  //     }
+  //   }
+  //   return PLep;
+  // }
+
+  double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, TLorentzVector LVMET, TLorentzVector &NeuOut) {
+    vector<TLorentzVector> Neutrinos;
+    double PNeutrino = SolveNeutrinos(Lep_, LVMET, Neutrinos);
+    if (PNeutrino < 0) return PNeutrino;
+    double PLep = 0;
+    for (unsigned ineu = 0; ineu < Neutrinos.size(); ++ineu) {
+      TLorentzVector Neu_ = Neutrinos.at(ineu);
+      double PLepTMassTemp = TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
+      if (PLepTMassTemp > PLep) {
+        PLep = PLepTMassTemp;
+        NeuOut = Neu_;
+      }
+    }
+    return PLep;
   }
 
   double CalcPHad(vector<TLorentzVector> ScaledJets) {
