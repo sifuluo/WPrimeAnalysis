@@ -28,7 +28,7 @@
 
 using namespace std;
 
-void RunModule(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 0) {
+void RunModule(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = -1) {
   // int DoReco = OptionCode%10;
   // int LeadingAsWPB = OptionCode/10%10;
 
