@@ -89,8 +89,8 @@ int LepTop_loop(Analyzer *a) {
     }
   }
 
-  p2d["LepbPtRatioVsdR"]->Fill(MatchGenbdR, MatchGenb.DeltaR(GenLepB));
-  p2d["LepbPtRatioVsdR_PtLimited"]->Fill(MatchGenbdRLimited, MatchGenbLimited.DeltaR(GenLepB));
+  p2d["LepbPtRatioVsdR"]->Fill(MatchGenbdR, MatchGenb.Pt() / GenLepB.Pt());
+  p2d["LepbPtRatioVsdR_PtLimited"]->Fill(MatchGenbdRLimited, MatchGenbLimited.Pt() / GenLepB.Pt());
 
   if (PLep > 0) {
     double tdr = LepTop.DeltaR(GenLepT);
