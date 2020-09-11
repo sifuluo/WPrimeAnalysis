@@ -93,7 +93,7 @@ public:
   // Assigning Gen Particles
   int AssignGenParticles();
   int WP, GenWPB, GenHadT, GenHadB, GenHadW, GenLepT, GenLepB, GenLepW, GenLep, GenNeu;
-  TLorentzVector LVWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu;
+  TLorentzVector LVWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu, LVGenLFJet0, LVGenLFJet1;
   vector<TLorentzVector> LVGenLFJet, LVGenOutSort;
   vector<int> GenLFJet, GenOutSort;
   int GenWPT, GenWPTB, GenWPTW, GenOtT, GenOtB, GenOtW;
@@ -125,7 +125,10 @@ public:
 
   pair<double, vector<TLorentzVector> > SolveTTbar(vector<TLorentzVector> jets_, vector<bool> btags_, vector<int> &bestperm_);
 
-
+  TTree* t;
+  TLorentzVector *m_GenWP, *m_GenWPB, *m_GenHadT, *m_GenHadB, *m_GenHadW, *m_GenHadLF0, *m_GenHadLF1, *m_GenLepT, *m_GenLepB, *m_GenLepW, *m_GenLep, *m_GenNeu;
+  void Tree_Init();
+  void Tree_Fill();
 
 private:
   ExRootTreeReader *treeReader;

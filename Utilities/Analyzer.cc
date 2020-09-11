@@ -68,6 +68,7 @@ void Analyzer::SetOutput(TString outputfolder, TString outputname) {
   TString ofilename = OutputName+".root";
   TString logname = OutputLogName+".txt";
   ofile = new TFile(ofilename,"RECREATE");
+  t = new TTree("t","Event Tree");
   AddPlot(new TH1F("EventCounter","Number of Events;Passcode",100,0,100));
   logfile.open(logname);
   logfile << "Log Started" <<endl;
@@ -481,8 +482,10 @@ int Analyzer::AssignGenParticles() {
   LVGenLepB = GenParticles[GenLepB]->P4();
   LVGenLep = GenParticles[GenLep]->P4();
   LVGenNeu = GenParticles[GenNeu]->P4();
-  LVGenLFJet.clear();
-  GenOutSort.clear();
+  // LVGenLFJet.clear();
+  LVGenLFJet = vector<TLorentzVector> {TLorentzVector(), TLorentzVector()};
+  // GenOutSort.clear();
+  GenOutSort = vector<int> {-1,-1};
 
   map<double,int> LFPt;
   LFPt.clear();
@@ -502,14 +505,20 @@ int Analyzer::AssignGenParticles() {
     if (ji != LFPt.begin()) {
       --ji;
       int genout = (*ji).second;
-      GenOutSort.push_back(genout);
-      LVGenLFJet.push_back(GenParticles[genout]->P4());
+      // GenOutSort.push_back(genout);
+      // LVGenLFJet.push_back(GenParticles[genout]->P4());
+      GenOutSort[itn] = genout;
+      LVGenLFJet[itn] = GenParticles[genout]->P4();
     }
     else {
-      GenOutSort.push_back(-1);
-      LVGenLFJet.push_back(TLorentzVector());
+      // GenOutSort.push_back(-1);
+      // LVGenLFJet.push_back(TLorentzVector());
+      GenOutSort[itn] = -1;
+      LVGenLFJet[itn] = TLorentzVector();
     }
   }
+  LVGenLFJet0 = LVGenLFJet[0];
+  LVGenLFJet1 = LVGenLFJet[1];
 
   //Verification of outgoing particles
   int temp = WeHadAMother(GenOutQuark,GenHadT).at(0);
@@ -680,6 +689,38 @@ pair<double, vector<TLorentzVector> > Analyzer::SolveTTbar(vector<TLorentzVector
   }
   bestperm_ = BestPerm;
   return pair<double, vector<TLorentzVector> > (BestP, BestParticles);
+}
+
+void Analyzer::Tree_Init() {
+  m_GenWP = &LVWP;
+  m_GenWPB = &LVGenWPB;
+  m_GenHadT = &LVGenHadT;
+  m_GenHadB = &LVGenHadB;
+  m_GenHadW = &LVGenHadW;
+  m_GenHadLF0 = &LVGenLFJet0;
+  m_GenHadLF1 = &LVGenLFJet1;
+  m_GenLepT = &LVGenLepT;
+  m_GenLepB = &LVGenLepB;
+  m_GenLepW = &LVGenLepW;
+  m_GenLep = &LVGenLep;
+  m_GenNeu = &LVGenNeu;
+
+  t->Branch("GenWP",&m_GenWP);
+  t->Branch("GenWPB",&m_GenWPB);
+  t->Branch("GenHadT",&m_GenHadT);
+  t->Branch("GenHadB",&m_GenHadB);
+  t->Branch("GenHadW",&m_GenHadW);
+  t->Branch("GenHadLF0",&m_GenHadLF0);
+  t->Branch("GenHadLF1",&m_GenHadLF1);
+  t->Branch("GenLepT",&m_GenLepT);
+  t->Branch("GenLepB",&m_GenLepB);
+  t->Branch("GenLepW",&m_GenLepW);
+  t->Branch("GenLep",&m_GenLep);
+  t->Branch("GenNeu",&m_GenNeu);
+}
+
+void Analyzer::Tree_Fill() {
+  t->Fill();
 }
 
 #endif

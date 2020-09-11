@@ -193,9 +193,10 @@ public:
   void SetUpMassFunctions() {
     TopMassDis = new TF1("TBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,300.0);
     WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
-    TopMassDis->SetParameters(100.,172.7,1.32);
+    // TopMassDis->SetParameters(100.,172.7,1.32); // Gen-level
+    TopMassDis->SetParameters(100.,171.186,26.76); // Reco-Level Leptonic Top
     WMassDis->SetParameters(100,80.385,2.085);
-    TopMassDis->SetParameter(0,100./TopMassDis->Eval(172.7)); // normalized it to peak at y = 1;
+    TopMassDis->SetParameter(0,100./TopMassDis->Eval(171.186)); // normalized it to peak at y = 1;
     WMassDis->SetParameter(0,100./WMassDis->Eval(80.385)); // normalized it to peak at y = 1;
   }
 
@@ -466,6 +467,18 @@ public:
         NeuOut = Neu_;
       }
     }
+    return PLep;
+  }
+
+  double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, TLorentzVector LVMET, TLorentzVector GenNeu, TLorentzVector &NeuOut) {
+    vector<TLorentzVector> Neutrinos;
+    double PNeutrino = SolveNeutrinos(Lep_, LVMET, Neutrinos);
+    if (PNeutrino < 0) return PNeutrino;
+    double PLep = 0;
+    TLorentzVector Neu_ = Neutrinos.at(0);
+    if (Neutrinos.at(1).DeltaR(GenNeu) < Neu_.DeltaR(GenNeu)) Neu_ = Neutrinos.at(1);
+    PLep = TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
+    NeuOut = Neu_;
     return PLep;
   }
 

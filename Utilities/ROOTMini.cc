@@ -30,6 +30,11 @@ public:
   void SetLep(TLorentzVector Lepton_, TLorentzVector MET_) {
     Lepton = Lepton_;
     LVMET = MET_;
+    GenNeu = TLorentzVector();
+  }
+
+  void SetGenNeu(TLorentzVector GenNeu_) {
+    GenNeu = GenNeu_;
   }
 
   void SetDebug(int debug_) {
@@ -203,7 +208,9 @@ public:
     TLorentzVector ScaledMET;
     vector<TLorentzVector> ScaledJets = b->ScaleJets(LepJets,scales,LVMET,ScaledMET);
     TLorentzVector Neutrino = TLorentzVector();
-    double PLep = b->CalcPLep(ScaledJets.at(0), Lepton, ScaledMET, Neutrino);
+    double PLep;
+    if (GenNeu == TLorentzVector()) PLep = b->CalcPLep(ScaledJets.at(0), Lepton, ScaledMET, Neutrino);
+    else PLep = b->CalcPLep(ScaledJets.at(0), Lepton, ScaledMET, GenNeu, Neutrino);
     if (PLep < 0) {
       return ((-1.0) * PLep +1);
     }
@@ -320,7 +327,7 @@ private:
   static ROOT::Math::Functor func;
 
   //Inputs
-  static TLorentzVector Lepton, LVMET;
+  static TLorentzVector Lepton, LVMET, GenNeu;
   static vector<TLorentzVector> Jets;
   static vector<TLorentzVector> LepJets;
 
@@ -338,6 +345,7 @@ ROOT::Math::Minimizer* ROOTMini::mini = ROOT::Math::Factory::CreateMinimizer("TM
 ROOT::Math::Functor ROOTMini::func;
 TLorentzVector ROOTMini::Lepton;
 TLorentzVector ROOTMini::LVMET;
+TLorentzVector ROOTMini::GenNeu;
 vector<TLorentzVector> ROOTMini::Jets;
 vector<TLorentzVector> ROOTMini::LepJets;
 int ROOTMini::FunctionCalls;
