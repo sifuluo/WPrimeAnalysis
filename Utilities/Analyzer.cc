@@ -598,10 +598,10 @@ void Analyzer::SetupROOTMini() {
 }
 
 void Analyzer::MatchJets(){
+  AdvJetMatchMap.clear();
+  AdvJetMatchMap = AdvJetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR, 2.0, true, false, true);
   JetMatchMap.clear();
-  JetMatchMap = AdvJetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR, 2.0, true, false, true);
-  SimpleJetMatchMap.clear();
-  SimpleJetMatchMap = JetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR);
+  JetMatchMap = JetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR);
   // AdvJetMatch(genLV, recoLV, max deltaR in the match, cut at larger than AlgodR = 0.2, if skip all gen LV with pt < 30, if skip all reco pt < 30)
 }
 
@@ -627,7 +627,7 @@ void Analyzer::GetRecoCorrectPerm() {
   GetGenCorrectPerm();
   MatchJets();
   for (unsigned it = 0; it < GenCorrectPerm.size(); ++it) {
-    RecoCorrectPerm.push_back(SimpleJetMatchMap[GenCorrectPerm.at(it)]);
+    RecoCorrectPerm.push_back(JetMatchMap[GenCorrectPerm.at(it)]);
   }
 }
 
@@ -652,8 +652,8 @@ void Analyzer::GetRecoHypothesis(){
     if (found == 0) HypoInOutPart.push_back(-1);
   }
   for (unsigned it = 0; it < HypoInOutPart.size(); ++it){
-    auto mapit = JetMatchMap.find(HypoInOutPart.at(it));
-    if (mapit != JetMatchMap.end()) {
+    auto mapit = AdvJetMatchMap.find(HypoInOutPart.at(it));
+    if (mapit != AdvJetMatchMap.end()) {
       ++MatchedHypo;
       int match1 = (*mapit).second.at(0);
       int match2 = (*mapit).second.at(1);
