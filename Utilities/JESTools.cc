@@ -4,6 +4,7 @@
 #include <TROOT.h>
 #include <TFile.h>
 #include <TH1.h>
+#include <TH2.h>
 #include <TF1.h>
 #include <TString.h>
 #include <TLorentzVector.h>
@@ -156,6 +157,10 @@ public:
     JESVector.at(ieta_).at(ipt_)->Fill(fill);
   }
 
+  void FillJESPlot(double fill, double eta_, double pt_) {
+    CalcBins(eta_, pt_);
+    JESVector.at(TempiEta).at(TempiPt)->Fill(fill);
+  }
 
   //Below is for Minimizer Interface
   vector< vector<TH1F*> > ReadJESPlots(TFile* f_) {
@@ -467,6 +472,7 @@ public:
         NeuOut = Neu_;
       }
     }
+    PLep *= CalcPdPhi(LepB_.DeltaPhi(Lep_ + NeuOut));
     return PLep;
   }
 
@@ -479,6 +485,7 @@ public:
     if (Neutrinos.at(1).DeltaR(GenNeu) < Neu_.DeltaR(GenNeu)) Neu_ = Neutrinos.at(1);
     PLep = TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
     NeuOut = Neu_;
+    PLep *= CalcPdPhi(LepB_.DeltaPhi(Lep_ + Neu_));
     return PLep;
   }
 
@@ -489,6 +496,20 @@ public:
     return PHad;
   }
 
+  // Temporary piece for evaluating dPhi of Leptonic W and b
+  TFile* fdPhi;
+  TH2F* hdPhi;
+  void SetfdPhi() {
+    fdPhi = new TFile("results/LepTopTreeRecoT_Add.root","READ");
+    TH2F* hdPhi2D = (TH2F*) fdPhi->Get("WbdPhiVsMatching");
+    hdPhi = hdPhi2D->ProjectionY("hdPhi",4,4);
+  }
+  double CalcPdPhi(double dphi) {
+    dphi = fabs(dphi);
+    int binx = hdPhi->GetXaxis()->FindBin(dphi);
+    double p = hdPhi->GetBinContent(binx) / hdPhi->GetMaximum();
+    return p;
+  }
 
 };
 

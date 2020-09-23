@@ -69,8 +69,15 @@ vector<TString> SearchFiles(int SampleType = 0, int irun = 0, bool report = true
         unsigned itrun = 1;
         // TString runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i",itrun);
         TString runname = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i.root",itrun);
-        while (fileexists(runname)){
-          for (unsigned itag = 1; itag < 3; ++itag) {
+        int skipcount = 0;
+        while (fileexists(runname) || skipcount < 4){
+          if (!fileexists(runname)) {
+            skipcount++;
+            itrun++;
+            continue;
+          }
+          skipcount = 0;
+          for (unsigned itag = 1; itag < 2; ++itag) {
             // TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i/tag_%.1i_delphes_events.root",itrun, itag );
             TString filename = samplebasepaths.at(ipath) + folders.at(ifolder) + TString::Format("Events/run_%.2i.root",itrun);
             if (fileexists(filename)) {

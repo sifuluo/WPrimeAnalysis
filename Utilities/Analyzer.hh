@@ -93,8 +93,8 @@ public:
   // Assigning Gen Particles
   int AssignGenParticles();
   int WP, GenWPB, GenHadT, GenHadB, GenHadW, GenLepT, GenLepB, GenLepW, GenLep, GenNeu;
-  TLorentzVector LVWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu, LVGenLFJet0, LVGenLFJet1;
-  vector<TLorentzVector> LVGenLFJet, LVGenOutSort;
+  TLorentzVector LVGenWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu, LVGenLF0, LVGenLF1;
+  vector<TLorentzVector> LVGenLF, LVGenOutSort;
   vector<int> GenLFJet, GenOutSort;
   int GenWPT, GenWPTB, GenWPTW, GenOtT, GenOtB, GenOtW;
   TLorentzVector LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtT, LVGenOtB, LVGenOtW;
@@ -113,8 +113,8 @@ public:
 
   double JetMatchMaxDeltaR;
   void MatchJets();
-  map<int, vector<int> > JetMatchMap; // map of indices of LVOutPart and LVJets
-  map<int, int> SimpleJetMatchMap;
+  map<int, vector<int> > AdvJetMatchMap; // map of indices of LVOutPart and LVJets
+  map<int, int> JetMatchMap;
   void GetGenCorrectPerm();
   vector<int> GenCorrectPerm; // correct set of indices in LVOutPart/GenOutQuark in the order of hypothesis
   void GetRecoCorrectPerm();
@@ -125,9 +125,12 @@ public:
 
   pair<double, vector<TLorentzVector> > SolveTTbar(vector<TLorentzVector> jets_, vector<bool> btags_, vector<int> &bestperm_);
 
+  TFile *TreeFile;
   TTree* t;
-  TLorentzVector *m_GenWP, *m_GenWPB, *m_GenHadT, *m_GenHadB, *m_GenHadW, *m_GenHadLF0, *m_GenHadLF1, *m_GenLepT, *m_GenLepB, *m_GenLepW, *m_GenLep, *m_GenNeu;
-  void Tree_Init();
+  TLorentzVector *m_GenWP, *m_GenWPB, *m_GenHadT, *m_GenHadB, *m_GenHadW, *m_GenLF0, *m_GenLF1, *m_GenLepT, *m_GenLepB, *m_GenLepW, *m_GenLep, *m_GenNeu;
+  TLorentzVector LVRecoWP, LVRecoWPB, LVRecoHadT, LVRecoHadB, LVRecoHadW, LVRecoLF0, LVRecoLF1, LVRecoLepT, LVRecoLepB, LVRecoLepW, LVRecoLep, LVRecoNeu;
+  TLorentzVector *m_RecoWP, *m_RecoWPB, *m_RecoHadT, *m_RecoHadB, *m_RecoHadW, *m_RecoLF0, *m_RecoLF1, *m_RecoLepT, *m_RecoLepB, *m_RecoLepW, *m_RecoLep, *m_RecoNeu;
+  void Tree_Init(int SaveTreeLevel);
   void Tree_Fill();
 
 private:
@@ -135,7 +138,7 @@ private:
   TClonesArray *branchGen, *branchJet, *branchElectron, *branchMuon, *branchMPT, *branchGenJet;
   TFile *ofile;
   TChain* chain_;
-  TString OutputName, OutputLogName;
+  TString OutputName, OutputLogName, outputname, outputfolder;
   double JetPtThreshold, AlgodR;
   bool verbose;
   int debug;
