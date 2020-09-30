@@ -127,10 +127,13 @@ public:
 
   TFile *TreeFile;
   TTree* t;
+  // Branches to store in the tree and Reco Branch containers
   TLorentzVector *m_GenWP, *m_GenWPB, *m_GenHadT, *m_GenHadB, *m_GenHadW, *m_GenLF0, *m_GenLF1, *m_GenLepT, *m_GenLepB, *m_GenLepW, *m_GenLep, *m_GenNeu;
-  TLorentzVector LVRecoWP, LVRecoWPB, LVRecoHadT, LVRecoHadB, LVRecoHadW, LVRecoLF0, LVRecoLF1, LVRecoLepT, LVRecoLepB, LVRecoLepW, LVRecoLep, LVRecoNeu;
-  TLorentzVector *m_RecoWP, *m_RecoWPB, *m_RecoHadT, *m_RecoHadB, *m_RecoHadW, *m_RecoLF0, *m_RecoLF1, *m_RecoLepT, *m_RecoLepB, *m_RecoLepW, *m_RecoLep, *m_RecoNeu;
+  TLorentzVector LVRecoWPB, LVRecoHadB, LVRecoLF0, LVRecoLF1, LVRecoLepB, LVRecoLep, LVRecoNeu;
+  TLorentzVector *m_RecoWPB, *m_RecoHadB, *m_RecoLF0, *m_RecoLF1, *m_RecoLepB, *m_RecoLep, *m_RecoNeu;
+  // End of Branch declaration
   void Tree_Init(int SaveTreeLevel);
+  void Tree_Reco();
   void Tree_Fill();
 
 private:

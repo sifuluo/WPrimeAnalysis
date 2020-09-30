@@ -498,7 +498,7 @@ public:
 
   // Temporary piece for evaluating dPhi of Leptonic W and b
   TFile* fdPhi;
-  TH2F* hdPhi;
+  TH1D* hdPhi;
   void SetfdPhi() {
     fdPhi = new TFile("results/LepTopTreeRecoT_Add.root","READ");
     TH2F* hdPhi2D = (TH2F*) fdPhi->Get("WbdPhiVsMatching");

@@ -731,32 +731,27 @@ void Analyzer::Tree_Init(int SaveTreeLevel = 0) {
   t->Branch("GenNeu",&m_GenNeu);
 
   if (SaveTreeLevel < 2) return;
-  m_RecoWP = &LVRecoWP;
+
   m_RecoWPB = &LVRecoWPB;
-  m_RecoHadT = &LVRecoHadT;
   m_RecoHadB = &LVRecoHadB;
-  m_RecoHadW = &LVRecoHadW;
   m_RecoLF0 = &LVRecoLF0;
   m_RecoLF1 = &LVRecoLF1;
-  m_RecoLepT = &LVRecoLepT;
   m_RecoLepB = &LVRecoLepB;
-  m_RecoLepW = &LVRecoLepW;
   m_RecoLep = &LVRecoLep;
   m_RecoNeu = &LVRecoNeu;
 
-  // Make Branches
-  t->Branch("RecoWP",&m_RecoWP);
   t->Branch("RecoWPB",&m_RecoWPB);
-  t->Branch("RecoHadT",&m_RecoHadT);
   t->Branch("RecoHadB",&m_RecoHadB);
-  t->Branch("RecoHadW",&m_RecoHadW);
   t->Branch("RecoLF0",&m_RecoLF0);
   t->Branch("RecoLF1",&m_RecoLF1);
-  t->Branch("RecoLepT",&m_RecoLepT);
   t->Branch("RecoLepB",&m_RecoLepB);
-  t->Branch("RecoLepW",&m_RecoLepW);
   t->Branch("RecoLep",&m_RecoLep);
   t->Branch("RecoNeu",&m_RecoNeu);
+}
+
+void Analyzer::Tree_Reco() {
+  vector<TLorentzVector> genvec = vector<TLorentzVector>{LVGenWPB, LVGenHadB, LVGenLF0, LVGenLF1, LVGenLepB};
+  
 }
 
 void Analyzer::Tree_Fill() {
