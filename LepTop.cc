@@ -83,12 +83,14 @@ void LepTop(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = -1
   a->AddPlot(new TH2F("WPMassVsP","Correct SampleType Type WPMassVsP; P; W\' Mass",101,-10,0.1, 1000,0,1000));
   a->AddPlot(new TH2F("WPMass2D","WPMass2D;FL;LL",100,0,1000,100,0,1000));
 
-  // a->Tree_Init();
+  a->Tree_Init(2);
   cout <<"Start Loop" <<endl;
   for (Int_t entry = a->GetStartEntry(); entry < a->GetEndEntry(); ++entry) {
     a->ReadEvent(entry);
     if (a->AssignGenParticles() == -1) continue;
     if (a->RecoPass == -1) continue;
+    a->Tree_Reco();
+    a->Tree_Fill();
 
     map<string, TH1F*> p1d = a->Plots1D;
     map<string, TH2F*> p2d = a->Plots2D;
@@ -283,7 +285,7 @@ void LepTop(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = -1
     if (LFMatch > 0) HadMatchEff->Fill(1);
     if (LFMatch > 1) HadMatchEff->Fill(2);
     if (HadbMatch > 0) HadMatchEff->Fill(3);
-    p2d["TopMassVsPHad"]->Fill(PHad,HadTop.M());
+    p2d["TopMassVsPHad"]->Fill(log10(PHad),HadTop.M());
 
     // Staring WPb selection
     double WPbPt = 0;
@@ -299,17 +301,17 @@ void LepTop(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = -1
     double PTotal = PLep * PHad;
     double FLTypeWPMass = (HadTop + WPb).M();
     double LLTypeWPMass = (LepTop + WPb).M();
-    if (SampleType == 0) p2d["WPMassVsP"]->Fill(PTotal, FLTypeWPMass);
-    if (SampleType == 1) p2d["WPMassVsP"]->Fill(PTotal, LLTypeWPMass);
+    if (SampleType == 0) p2d["WPMassVsP"]->Fill(log10(PTotal), FLTypeWPMass);
+    if (SampleType == 1) p2d["WPMassVsP"]->Fill(log10(PTotal), LLTypeWPMass);
     if (SampleType == 2) {
       double WPbdRHadT = WPb.DeltaR(HadTop);
       double WPbdRLepT = WPb.DeltaR(LepTop);
-      if (WPbdRHadT > WPbdRLepT) p2d["WPMassVsP"]->Fill(PTotal, FLTypeWPMass);
-      else p2d["WPMassVsP"]->Fill(PTotal, LLTypeWPMass);
+      if (WPbdRHadT > WPbdRLepT) p2d["WPMassVsP"]->Fill(log10(PTotal), FLTypeWPMass);
+      else p2d["WPMassVsP"]->Fill(log10(PTotal), LLTypeWPMass);
     }
     p2d["WPMass2D"]->Fill(FLTypeWPMass, LLTypeWPMass);
-
   }
 
+  a->Tree_Save();
   a->SaveOutput();
 }

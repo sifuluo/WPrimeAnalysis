@@ -23,7 +23,7 @@ Analyzer::Analyzer(int SampleType_, int irun_, double pt = 30) {
   StartEntry = 0;
   EndEntry = nEntries;
   JetPtThreshold = pt;
-  AlgodR = 0.2;
+  LepIso = 0.2;
   debug = -2;
   RecoPass = 0;
   GenPass = 0;
@@ -199,7 +199,7 @@ void Analyzer::GetInfos() {
     Muon* mu = (Muon*) branchMuon->At(it);
     Muons.push_back(mu);
     LVMuons.push_back(mu->P4());
-    if (mu->IsolationVar > AlgodR || mu->PT < 30) {
+    if (mu->IsolationVar > LepIso || mu->PT < 30) {
       LVSoftLep.push_back(mu->P4());
       continue;
     }
@@ -212,7 +212,7 @@ void Analyzer::GetInfos() {
     Electron* e = (Electron*) branchElectron->At(it);
     Electrons.push_back(e);
     LVElectrons.push_back(e->P4());
-    if (e->IsolationVar > AlgodR || e->PT < 30) {
+    if (e->IsolationVar > LepIso || e->PT < 30) {
       LVSoftLep.push_back(e->P4());
       continue;
     }
@@ -695,7 +695,7 @@ pair<double, vector<TLorentzVector> > Analyzer::SolveTTbar(vector<TLorentzVector
   return pair<double, vector<TLorentzVector> > (BestP, BestParticles);
 }
 
-void Analyzer::Tree_Init(int SaveTreeLevel = 0) {
+void Analyzer::Tree_Init(int SaveTreeLevel = 2) {
   TString ofilename = ofile->GetName();
   TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
   t = new TTree("t","Event Tree");
@@ -751,11 +751,29 @@ void Analyzer::Tree_Init(int SaveTreeLevel = 0) {
 
 void Analyzer::Tree_Reco() {
   vector<TLorentzVector> genvec = vector<TLorentzVector>{LVGenWPB, LVGenHadB, LVGenLF0, LVGenLF1, LVGenLepB};
-  
+  vector<TLorentzVector> recovec = vector<TLorentzVector>(5);
+  double mdr_;
+  map<int,int>recomap = JetMatch(genvec, LVJets, mdr_, 0.4, 0.5);
+  for (auto it = recomap.begin(); it != recomap.end(); ++it) {
+    recovec.at(it->first) = LVJets.at(it->second);
+  }
+  LVRecoWPB = recovec.at(0);
+  LVRecoHadB = recovec.at(1);
+  LVRecoLF0 = recovec.at(2);
+  LVRecoLF1 = recovec.at(3);
+  LVRecoLepB = recovec.at(4);
+  LVRecoLep = LVLeptons[0];
+  LVRecoNeu = LVMET;
+  LVRecoNeu.SetZ(LVGenNeu.Z());
 }
 
 void Analyzer::Tree_Fill() {
   t->Fill();
+}
+
+void Analyzer::Tree_Save() {
+  TreeFile->Write();
+  TreeFile->Save();
 }
 
 #endif

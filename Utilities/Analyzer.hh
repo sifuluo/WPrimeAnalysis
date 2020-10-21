@@ -135,6 +135,7 @@ public:
   void Tree_Init(int SaveTreeLevel);
   void Tree_Reco();
   void Tree_Fill();
+  void Tree_Save();
 
 private:
   ExRootTreeReader *treeReader;
@@ -142,7 +143,7 @@ private:
   TFile *ofile;
   TChain* chain_;
   TString OutputName, OutputLogName, outputname, outputfolder;
-  double JetPtThreshold, AlgodR;
+  double JetPtThreshold, LepIso;
   bool verbose;
   int debug;
   int JetPtCutOff, JetNumberCutoff, irun;

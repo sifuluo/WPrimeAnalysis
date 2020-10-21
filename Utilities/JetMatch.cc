@@ -28,15 +28,15 @@ pair<int,int> FindMatrixMin(vector< vector<double> > &matrix, vector<int> &list1
   return pair<int,int>(ml1,ml2);
 }
 
-map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, bool cut = true, bool FilterSoftGen = false, bool FilterSoft = true) {
+map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, double &maxDeltaR, double drcut = 0.4, double ptratiocut = 0.5, double FilterSoftGen = 0, double FilterSoftReco = 30) {
   bool testmodule = false;
   vector<int> l1, l2;
   for (unsigned il = 0; il < v1.size(); ++il) {
-    if ((v1[il].Pt() < JetPtThreshold && FilterSoftGen)||v1[il].Pt() == 0) l1.push_back(0);
+    if ((v1[il].Pt() < FilterSoftGen)||v1[il].Pt() == 0) l1.push_back(0);
     else l1.push_back(1);
   }
   for (unsigned il = 0; il < v2.size(); ++il) {
-    if ((v2[il].Pt() < JetPtThreshold && FilterSoft)||v2[il].Pt() == 0) l2.push_back(0);
+    if ((v2[il].Pt() < FilterSoftReco)||v2[il].Pt() == 0) l2.push_back(0);
     else l2.push_back(1);
   }
   map<int,int> out;
@@ -48,7 +48,9 @@ map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, do
     if (testmodule) cout << "|";
     for (unsigned iv2 = 0; iv2 < v2.size(); ++iv2) {
       double dr12 = v1[iv1].DeltaR(v2[iv2]);
-      v2p.push_back(dr12);
+      double pr = v2[iv2].Pt() / v1[iv1].Pt();
+      if (!ptratiocut || (pr > 1. - ptratiocut && pr < 1. + ptratiocut)) v2p.push_back(dr12);
+      else v2p.push_back(999.);
       if (testmodule) cout << Form(" %5.3f |",dr12);
     }
     if (testmodule) cout <<endl;
@@ -66,7 +68,7 @@ map<int,int> JetMatch(vector<TLorentzVector> &v1, vector<TLorentzVector> &v2, do
       cout << Form("V1:%d,pT: %5.2f,eta: %5.2f,phi: %5.2f | V2:%d,pT: %5.2f,eta: %5.2f,phi: %5.2f | dR: %5.3f",minv1,v1[minv1].Pt(),v1[minv1].Eta(),v1[minv1].Phi(),minv2,v2[minv2].Pt(),v2[minv2].Eta(),v2[minv2].Phi(),minR) << endl;
     }
 
-    if (cut && minR > AlgodR) {
+    if (drcut && minR > drcut) {
       if (testmodule) cout <<Form("******Cut at minR = %5.3f",minR) << endl;
       break;
     }
