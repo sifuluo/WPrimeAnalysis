@@ -44,7 +44,9 @@ void MatchAll(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   vector<int>* Conflict = new vector<int>;
   vector<double>* DeltaR = new vector<double>;
   vector<double>* PtRatio = new vector<double>;
+  cout << "before init" <<endl;
   a->Tree_Init(); // Init tree and initialize gen and reco branch
+  cout << "done init" <<endl;
   a->t->Branch("Conflict",&Conflict);
   a->t->Branch("DeltaR",&DeltaR);
   a->t->Branch("PtRatio",&PtRatio);

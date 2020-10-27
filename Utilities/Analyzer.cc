@@ -450,14 +450,14 @@ int Analyzer::AssignGenParticles() {
   if (SampleType == 2) {
     WP = -1;
     GenWPB = -1;
-    LVGenWP = TLorentzVector();
-    LVGenWPB = TLorentzVector();
+    Gen.WP = TLorentzVector();
+    Gen.WPB = TLorentzVector();
   }
   else {
     WP = GenWP[0];
     GenWPB = WeHadAMother(GenB, WP).at(0);
-    LVGenWP = GenParticles[WP]->P4();
-    LVGenWPB = GenParticles[GenWPB]->P4();
+    Gen.WP = GenParticles[WP]->P4();
+    Gen.WPB = GenParticles[GenWPB]->P4();
   }
   for (unsigned it = 0; it < GenW.size(); ++it) {
     int genw = BeRealMother(GenW[it]);
@@ -485,18 +485,6 @@ int Analyzer::AssignGenParticles() {
   Gen.Lep = GenParticles[GenLep]->P4();
   Gen.Neu = GenParticles[GenNeu]->P4();
   vector<TLorentzVector> LVGenLF = vector<TLorentzVector> {TLorentzVector(), TLorentzVector()};
-
-  // LVGenHadW = GenParticles[GenHadW]->P4();
-  // LVGenHadT = GenParticles[GenHadT]->P4();
-  // LVGenHadB = GenParticles[GenHadB]->P4();
-  // LVGenLepW = GenParticles[GenLepW]->P4();
-  // LVGenLepT = GenParticles[GenLepT]->P4();
-  // LVGenLepB = GenParticles[GenLepB]->P4();
-  // LVGenLep = GenParticles[GenLep]->P4();
-  // LVGenNeu = GenParticles[GenNeu]->P4();
-  // // LVGenLF.clear();
-  // LVGenLF = vector<TLorentzVector> {TLorentzVector(), TLorentzVector()};
-  // GenOutSort.clear();
   GenOutSort = vector<int> {-1,-1};
 
   map<double,int> LFPt;
@@ -517,14 +505,10 @@ int Analyzer::AssignGenParticles() {
     if (ji != LFPt.begin()) {
       --ji;
       int genout = (*ji).second;
-      // GenOutSort.push_back(genout);
-      // LVGenLF.push_back(GenParticles[genout]->P4());
       GenOutSort[itn] = genout;
       LVGenLF[itn] = GenParticles[genout]->P4();
     }
     else {
-      // GenOutSort.push_back(-1);
-      // LVGenLF.push_back(TLorentzVector());
       GenOutSort[itn] = -1;
       LVGenLF[itn] = TLorentzVector();
     }
@@ -711,23 +695,8 @@ void Analyzer::Tree_Init(int SaveTreeLevel = 3) {
   TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
   t = new TTree("t","Event Tree");
   CDOut();
-  // Make pointers to TLorentzVectors
-  // TLorentzVector as input for branches needs to be address of pointer
-  if (SaveTreeLevel < 1) return;
-  // m_GenWP = &LVGenWP;
-  // m_GenWPB = &LVGenWPB;
-  // m_GenHadT = &LVGenHadT;
-  // m_GenHadB = &LVGenHadB;
-  // m_GenHadW = &LVGenHadW;
-  // m_GenLF0 = &LVGenLF0;
-  // m_GenLF1 = &LVGenLF1;
-  // m_GenLepT = &LVGenLepT;
-  // m_GenLepB = &LVGenLepB;
-  // m_GenLepW = &LVGenLepW;
-  // m_GenLep = &LVGenLep;
-  // m_GenNeu = &LVGenNeu;
 
-  // Make Branches
+  if (SaveTreeLevel < 1) return;
   t->Branch("GenWP",&(Gen.pWP));
   t->Branch("GenWPB",&(Gen.pWPB));
   t->Branch("GenHadT",&(Gen.pHadT));
@@ -742,64 +711,38 @@ void Analyzer::Tree_Init(int SaveTreeLevel = 3) {
   t->Branch("GenNeu",&(Gen.pNeu));
 
   if (SaveTreeLevel < 2) return;
-
-
-  // m_RecoWPB = &LVRecoWPB;
-  // m_RecoHadB = &LVRecoHadB;
-  // m_RecoLF0 = &LVRecoLF0;
-  // m_RecoLF1 = &LVRecoLF1;
-  // m_RecoLepB = &LVRecoLepB;
-  // m_RecoLep = &LVRecoLep;
-  // m_RecoNeu = &LVRecoNeu;
-
-  Reco.pWPB = &LVRecoWPB;
-  Reco.pHadB = &LVRecoHadB;
-  Reco.pLF0 = &LVRecoLF0;
-  Reco.pLF1 = &LVRecoLF1;
-  Reco.pLepB = &LVRecoLepB;
-  Reco.pLep = &LVRecoLep;
-  Reco.pNeu = &LVRecoNeu;
-
-  t->Branch("RecoWPB",&m_RecoWPB);
-  t->Branch("RecoHadB",&m_RecoHadB);
-  t->Branch("RecoLF0",&m_RecoLF0);
-  t->Branch("RecoLF1",&m_RecoLF1);
-  t->Branch("RecoLepB",&m_RecoLepB);
-  t->Branch("RecoLep",&m_RecoLep);
-  t->Branch("RecoNeu",&m_RecoNeu);
+  t->Branch("RecoWPB",&(Reco.pWPB));
+  t->Branch("RecoHadB",&(Reco.pHadB));
+  t->Branch("RecoLF0",&(Reco.pLF0));
+  t->Branch("RecoLF1",&(Reco.pLF1));
+  t->Branch("RecoLepB",&(Reco.pLepB));
+  t->Branch("RecoLep",&(Reco.pLep));
+  t->Branch("RecoNeu",&(Reco.pNeu));
 
   if (SaveTreeLevel < 3) return;
-
-  m_RecoWP = &LVRecoWP;
-  m_RecoHadW = &LVRecoHadW;
-  m_RecoHadT = &LVRecoHadT;
-  m_RecoLepW = &LVRecoLepW;
-  m_RecoLepT = &LVRecoLepT;
-
-  t->Branch("RecoWP",&m_RecoWP);
-  t->Branch("RecoHadT",&m_RecoHadT);
-  t->Branch("RecoHadW",&m_RecoHadW);
-  t->Branch("RecoLepT",&m_RecoLepT);
-  t->Branch("RecoLepW",&m_RecoLepW);
+  Reco.Calculate(SampleType);
+  t->Branch("RecoWP",&(Reco.WP));
+  t->Branch("RecoHadT",&(Reco.HadT));
+  t->Branch("RecoHadW",&(Reco.HadW));
+  t->Branch("RecoLepT",&(Reco.LepT));
+  t->Branch("RecoLepW",&(Reco.LepW));
 
 }
 
 void Analyzer::Tree_Reco() {
-  vector<TLorentzVector> genvec = vector<TLorentzVector>{LVGenWPB, LVGenHadB, LVGenLF0, LVGenLF1, LVGenLepB};
+  vector<TLorentzVector> genvec = Gen.Observables();
   vector<TLorentzVector> recovec = vector<TLorentzVector>(5);
   double mdr_;
   map<int,int>recomap = JetMatch(genvec, LVJets, mdr_, 0.4, 0.5);
   for (auto it = recomap.begin(); it != recomap.end(); ++it) {
     recovec.at(it->first) = LVJets.at(it->second);
   }
-  LVRecoWPB = recovec.at(0);
-  LVRecoHadB = recovec.at(1);
-  LVRecoLF0 = recovec.at(2);
-  LVRecoLF1 = recovec.at(3);
-  LVRecoLepB = recovec.at(4);
-  LVRecoLep = LVLeptons[0];
-  LVRecoNeu = LVMET;
-  LVRecoNeu.SetZ(LVGenNeu.Z());
+  for (unsigned ir = 0; ir < 5; ++ir) {
+    *(Reco.pObservables().at(ir)) = recovec.at(ir);
+  }
+  Reco.Lep = LVLeptons[0];
+  Reco.Neu = LVMET;
+  Reco.Neu.SetZ(Gen.Neu.Z());
 }
 
 void Analyzer::Tree_Fill() {

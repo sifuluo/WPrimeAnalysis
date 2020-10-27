@@ -6,25 +6,11 @@
 class Hypothesis {
 public:
   Hypothesis() { // TLorentzVectors should be stored inside of this class, pointers are only for branch use
-    // VToP();
+    MakePointers();
   }
   TLorentzVector WPB, HadB, LF0, LF1, LepB, Lep, Neu, HadW, HadT, LepW, LepT, WP;
   TLorentzVector *pWPB, *pHadB, *pLF0, *pLF1, *pLepB, *pLep, *pNeu, *pHadW, *pHadT, *pLepW, *pLepT, *pWP;
-  // void PtoV() {
-  //   WPB = *pWPB;
-  //   HadB = *pHadB;
-  //   LF0 = *pLF0;
-  //   LF1 = *pLF1;
-  //   LepB = *pLepB;
-  //   Lep = *pLep;
-  //   Neu = *pNeu;
-  //   HadW = *pHadW;
-  //   HadT = *pHadT;
-  //   LepW = *pLepW;
-  //   LepT = *pLepT;
-  //   WP = *pWP;
-  // }
-  void VToP() {
+  void MakePointers() {
     pWPB= &WPB;
     pHadB= &HadB;
     pLF0= &LF0;
@@ -52,6 +38,10 @@ public:
   }
   vector<TLorentzVector> Observables() {
     vector<TLorentzVector> out{LF0, LF1, HadB, LepB, WPB};
+    return out;
+  }
+  vector<TLorentzVector*> pObservables() {
+    vector<TLorentzVector*> out{pLF0, pLF1, pHadB, pLepB, pWPB};
     return out;
   }
 
