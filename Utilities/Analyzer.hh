@@ -8,6 +8,7 @@
 #include "ROOTMini.cc"
 #include "JESTools.cc"
 #include "GenTools.cc"
+#include "Hypothesis.cc"
 
 // Delphes
 #include "classes/DelphesClasses.h"
@@ -94,7 +95,7 @@ public:
   int AssignGenParticles();
   int WP, GenWPB, GenHadT, GenHadB, GenHadW, GenLepT, GenLepB, GenLepW, GenLep, GenNeu;
   TLorentzVector LVGenWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu, LVGenLF0, LVGenLF1;
-  vector<TLorentzVector> LVGenLF, LVGenOutSort;
+  vector<TLorentzVector> LVGenOutSort;
   vector<int> GenLFJet, GenOutSort;
   int GenWPT, GenWPTB, GenWPTW, GenOtT, GenOtB, GenOtW;
   TLorentzVector LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtT, LVGenOtB, LVGenOtW;
@@ -129,8 +130,9 @@ public:
   TTree* t;
   // Branches to store in the tree and Reco Branch containers
   TLorentzVector *m_GenWP, *m_GenWPB, *m_GenHadT, *m_GenHadB, *m_GenHadW, *m_GenLF0, *m_GenLF1, *m_GenLepT, *m_GenLepB, *m_GenLepW, *m_GenLep, *m_GenNeu;
-  TLorentzVector LVRecoWPB, LVRecoHadB, LVRecoLF0, LVRecoLF1, LVRecoLepB, LVRecoLep, LVRecoNeu;
-  TLorentzVector *m_RecoWPB, *m_RecoHadB, *m_RecoLF0, *m_RecoLF1, *m_RecoLepB, *m_RecoLep, *m_RecoNeu;
+  TLorentzVector LVRecoWPB, LVRecoHadB, LVRecoLF0, LVRecoLF1, LVRecoLepB, LVRecoLep, LVRecoNeu, LVRecoHadW, LVRecoHadT, LVRecoLepW, LVRecoLepT, LVRecoWP;
+  TLorentzVector *m_RecoWPB, *m_RecoHadB, *m_RecoLF0, *m_RecoLF1, *m_RecoLepB, *m_RecoLep, *m_RecoNeu, m_RecoHadW, m_RecoHadT, m_RecoLepW, m_RecoLepT, m_RecoWP;
+  Hypothesis Gen, Reco;
   // End of Branch declaration
   void Tree_Init(int SaveTreeLevel);
   void Tree_Reco();
