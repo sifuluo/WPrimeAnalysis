@@ -47,51 +47,18 @@ public:
 
   static double MinimizePFunc(const double *scales) {
     FunctionCalls ++;
-    // // Test funciton
-    // const double x = scales[0];
-    // const double y = scales[1];
-    // const double tmp1 = y-x*x;
-    // const double tmp2 = 1-x;
-    // return 100*tmp1*tmp1+tmp2*tmp2 + scales[2]* scales[2] + scales[3] * scales[3];
-
-    //Calculation of PScale
-    // double PScale = b->CalcPScalesHist(Jets, scales);
     double PScale = b->CalcPScalesFunc(Jets, scales);
     //Scaling Jets and MET
     TLorentzVector ScaledMET;
     vector<TLorentzVector> ScaledJets = b->ScaleJets(Jets, scales, LVMET, ScaledMET);
-    //Solving Neutrino
-    // vector<TLorentzVector> Neutrinos;
-    // double PNeutrino = b->SolveNeutrinos(Lepton, ScaledMET, Neutrinos);
-    // InterPNeutrino = PNeutrino;
-    // if (PNeutrino < 0) {
-    //   return ((-1.0) * PNeutrino + 1);
-    // }
-    // //Calculation of P on leptonic side
-    // TLorentzVector Neutrino = TLorentzVector();
-    // double PLep = b->CalcPLep(ScaledJets.at(3), Lepton, Neutrinos, Neutrino);
-
     TLorentzVector Neutrino = TLorentzVector();
     double PLep = b->CalcPLep(ScaledJets.at(3), Lepton, ScaledMET, Neutrino);
     if (PLep < 0) {
       return ((-1.0) * PLep + 1);
     }
-
     //Calculation of P on hadronic side
     double PHad = b->CalcPHad(ScaledJets);
-
-
-    // for (unsigned ineu = 0; ineu < Neutrinos.size(); ++ineu) {
-    //   TLorentzVector NeutrinoTemp =  Neutrinos.at(ineu);
-    //   double PLepTMassTemp = b->CalcPLep(ScaledJets.at(3), Lepton, NeutrinoTemp);
-    //   if (PLepTMassTemp > PLep) {
-    //     PLep = PLepTMassTemp;
-    //     Neutrino = NeutrinoTemp;
-    //   }
-    // }
     // So far the P is the higher the better
-
-
     //Summing all and make it negative and plus 1
     double Prob = (PScale * PHad * PLep * (-1.0) + 1);
     //Intermediate outputs
@@ -106,14 +73,12 @@ public:
       vector<double> tempp{PScale,PHad,PLep,Prob};
       InterProbs = tempp;
     }
-
     if (RedoOutput) {
       RedoParticles.clear();
       RedoParticles = ScaledJets;
       RedoParticles.push_back(Lepton);
       RedoParticles.push_back(Neutrino);
     }
-
     //Outputs for debugging
     if (debug) {
       cout << endl <<"------In Minimizer------" <<endl;
@@ -147,7 +112,7 @@ public:
     return Prob;
   }
 
-  double MinimizeP(vector<TLorentzVector> Jets_) {
+  double MinimizeP(vector<TLorentzVector> Jets_) { // Takes only 4 jets to minimize
     FunctionCalls = 0;
     //Set up minimizer
     func = ROOT::Math::Functor(&MinimizePFunc,4);
@@ -250,7 +215,6 @@ public:
     else Prob = -1;
 
     return Prob;
-
   }
   // Unfinished outputs
   vector<double> GetInterScalesVector() {
@@ -306,6 +270,44 @@ public:
     return Probs;
   }
 
+  vector< vector<double> > ReCalcPVector(vector< vector<TLorentzVector> > &ParticleSets) {
+    vector<vector<double> > out; //Scales, PScales, Pre-PMass, Post-PMass
+    ParticleSets.clear(); // Pre-Scale Jets, Scaled Jets
+    out.push_back(MinimizedScales); // Scales in order of LF0, LF1, HadB, LepB
+    vector<double> vPScale = b->CalcPScalesVectorFunc(Jets, MinimizedScalesArray);
+    out.push_back(vPScale);
+    TLorentzVector ScaledMET, Neutrino;
+    vector<TLorentzVector> ScaledJets = b->ScaleJets(Jets, MinimizedScalesArray, LVMET, ScaledMET);
+    vector<TLorentzVector> Neutrinos;
+    double radical = b->SolveNeutrinos(Lepton, ScaledMET, Neutrinos);
+    double PLep = 0;
+    for (unsigned ineu = 0; ineu < Neutrinos.size(); ++ineu) {
+      TLorentzVector NeutrinoTemp =  Neutrinos.at(ineu);
+      double PLepTMassTemp = b->CalcPLep(ScaledJets.at(3), Lepton, NeutrinoTemp);
+      if (PLepTMassTemp > PLep) {
+        PLep = PLepTMassTemp;
+        Neutrino = NeutrinoTemp;
+      }
+    }
+    vector<TLorentzVector> prejets = Jets;
+    prejets.push_back(TLorentzVector());
+    prejets.push_back(Lepton);
+    prejets.push_back(LVMET);
+    out.push_back(b->CalcPMassVector(prejets));
+
+    vector<TLorentzVector> outjets = ScaledJets;
+    outjets.push_back(TLorentzVector());
+    outjets.push_back(Lepton);
+    outjets.push_back(Neutrino);
+    out.push_back(b->CalcPMassVector(outjets));
+
+    ParticleSets.push_back(prejets);
+    ParticleSets.push_back(outjets);
+
+    //parts are LFJet1, LFJet2, HadB, LepB, WPB(Left empty), Lepton, Neutrino
+    return out;
+  }
+
   // Unfinished outputs
   static vector<double> InterScalesVector;
   static vector<TLorentzVector> InterScaledJets;
@@ -343,6 +345,7 @@ private:
 JESTools * ROOTMini::b;
 ROOT::Math::Minimizer* ROOTMini::mini = ROOT::Math::Factory::CreateMinimizer("TMinuit");
 ROOT::Math::Functor ROOTMini::func;
+
 TLorentzVector ROOTMini::Lepton;
 TLorentzVector ROOTMini::LVMET;
 TLorentzVector ROOTMini::GenNeu;

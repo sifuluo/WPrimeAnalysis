@@ -546,12 +546,12 @@ int Analyzer::AssignGenParticles() {
     GenOtB = GenLepB;
     GenOtW = GenLepW;
 
-    LVGenWPT = Gen.HadT;
-    LVGenWPTB = Gen.HadB;
-    LVGenWPTW = Gen.HadW;
-    LVGenOtT = Gen.LepT;
-    LVGenOtB = Gen.LepB;
-    LVGenOtW = Gen.LepW;
+    // LVGenWPT = Gen.HadT;
+    // LVGenWPTB = Gen.HadB;
+    // LVGenWPTW = Gen.HadW;
+    // LVGenOtT = Gen.LepT;
+    // LVGenOtB = Gen.LepB;
+    // LVGenOtW = Gen.LepW;
   }
   else if (SampleType == 1) {
     GenWPT = GenLepT;
@@ -561,12 +561,12 @@ int Analyzer::AssignGenParticles() {
     GenOtB = GenHadB;
     GenOtW = GenHadW;
 
-    LVGenWPT = Gen.LepT;
-    LVGenWPTB = Gen.LepB;
-    LVGenWPTW = Gen.LepW;
-    LVGenOtT = Gen.HadT;
-    LVGenOtB = Gen.HadB;
-    LVGenOtW = Gen.HadW;
+    // LVGenWPT = Gen.LepT;
+    // LVGenWPTB = Gen.LepB;
+    // LVGenWPTW = Gen.LepW;
+    // LVGenOtT = Gen.HadT;
+    // LVGenOtB = Gen.HadB;
+    // LVGenOtW = Gen.HadW;
   }
   return 0;
 }
@@ -688,44 +688,21 @@ pair<double, vector<TLorentzVector> > Analyzer::SolveTTbar(vector<TLorentzVector
   }
   bestperm_ = BestPerm;
   return pair<double, vector<TLorentzVector> > (BestP, BestParticles);
-}
+} // This function is not very repetitive, so it needs to be removed
 
 void Analyzer::Tree_Init(int SaveTreeLevel = 3) {
-  TString ofilename = ofile->GetName();
-  TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
-  t = new TTree("t","Event Tree");
+  // TString ofilename = ofile->GetName();
+  // TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
+  TreeFile = new TFile(outputfolder + "TruthTree.root","RECREATE");
+  t = new TTree("t0","Event Tree");
   CDOut();
+  bool savegen = false;
+  bool savereco = false;
+  if (SaveTreeLevel > 0) savegen = true;
+  if (SaveTreeLevel > 2) savereco = true;
 
-  if (SaveTreeLevel < 1) return;
-  t->Branch("GenWP",&(Gen.pWP));
-  t->Branch("GenWPB",&(Gen.pWPB));
-  t->Branch("GenHadT",&(Gen.pHadT));
-  t->Branch("GenHadB",&(Gen.pHadB));
-  t->Branch("GenHadW",&(Gen.pHadW));
-  t->Branch("GenLF0",&(Gen.pLF0));
-  t->Branch("GenLF1",&(Gen.pLF1));
-  t->Branch("GenLepT",&(Gen.pLepT));
-  t->Branch("GenLepB",&(Gen.pLepB));
-  t->Branch("GenLepW",&(Gen.pLepW));
-  t->Branch("GenLep",&(Gen.pLep));
-  t->Branch("GenNeu",&(Gen.pNeu));
-
-  if (SaveTreeLevel < 2) return;
-  t->Branch("RecoWPB",&(Reco.pWPB));
-  t->Branch("RecoHadB",&(Reco.pHadB));
-  t->Branch("RecoLF0",&(Reco.pLF0));
-  t->Branch("RecoLF1",&(Reco.pLF1));
-  t->Branch("RecoLepB",&(Reco.pLepB));
-  t->Branch("RecoLep",&(Reco.pLep));
-  t->Branch("RecoNeu",&(Reco.pNeu));
-
-  if (SaveTreeLevel < 3) return;
-  Reco.Calculate(SampleType);
-  t->Branch("RecoWP",&(Reco.WP));
-  t->Branch("RecoHadT",&(Reco.HadT));
-  t->Branch("RecoHadW",&(Reco.HadW));
-  t->Branch("RecoLepT",&(Reco.LepT));
-  t->Branch("RecoLepW",&(Reco.LepW));
+  Gen.BookBranches(t,"Gen",savegen);
+  Reco.BookBranches(t,"Reco",savereco);
 
 }
 
@@ -743,6 +720,7 @@ void Analyzer::Tree_Reco() {
   Reco.Lep = LVLeptons[0];
   Reco.Neu = LVMET;
   Reco.Neu.SetZ(Gen.Neu.Z());
+  Reco.Calculate(SampleType);
 }
 
 void Analyzer::Tree_Fill() {

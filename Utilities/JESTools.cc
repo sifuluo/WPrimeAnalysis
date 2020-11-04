@@ -26,6 +26,12 @@ public:
     // TempiPt = 0;
   };
 
+  // const double RNBMTag(0.01 / 0.99), RNBTag(1.0), RBMTag(0.3/0.7), RBTag(1.0);
+  const double RNBMTag = 0.01 / 0.99;
+  const double RNBTag = 1.0;
+  const double RBMTag = 0.3/0.7;
+  const double RBTag = 1.0;
+
   const vector<double> etabins{0., 1.3, 2.5, 3.0, 5.2};
 
   const vector<vector<double> > ptbins{
@@ -267,7 +273,6 @@ public:
   }
 
   double CalcPFlavor(vector<int> perm_, vector<bool> BTags_) {
-    const double RNBMTag(0.01), RNBTag(0.99), RBMTag(0.3), RBTag(0.7);
     double pf = 1;
     if (BTags_.at(perm_.at(0))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
     else pf *= RNBTag; // Non-b-jet tagged non-b;
@@ -281,26 +286,36 @@ public:
       if (BTags_.at(perm_.at(4))) pf *= RBTag; // b-jet tagged as a b;
       else pf *= RBMTag; // b-jet tagged to be a non-b;
     }
-    double max = 0.7*0.7*0.99*0.99;
-    pf = pf / max;
     return pf;
   }
 
+  vector<double> CalcPFlavorVector(vector<int> perm_, vector<bool> BTags_) {
+    vector<double> out;
+    if (BTags_.at(perm_.at(0))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
+    else out.push_back(RNBTag); // Non-b-jet tagged non-b;
+    if (BTags_.at(perm_.at(1))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
+    else out.push_back(RNBTag); // Non-b-jet tagged non-b;
+    if (BTags_.at(perm_.at(2))) out.push_back(RBTag); // b-jet tagged as a b;
+    else out.push_back(RBMTag); // b-jet tagged to be a non-b;
+    if (BTags_.at(perm_.at(3))) out.push_back(RBTag); // b-jet tagged as a b;
+    else out.push_back(RBMTag); // b-jet tagged to be a non-b;
+    if(perm_.size() > 4){
+      if (BTags_.at(perm_.at(4))) out.push_back(RBTag); // b-jet tagged as a b;
+      else out.push_back(RBMTag); // b-jet tagged to be a non-b;
+    }
+    return out;
+  }
+
   double CalcBTag(int it, vector<bool> BTags_, bool isB = true) {
-    const double RNBMTag(0.01), RNBTag(0.99), RBMTag(0.3), RBTag(0.7);
     double pf = 1;
-    double max = 1;
     if (isB) {
-      max = RBTag;
       if (BTags_.at(it)) pf *= RBTag;
       else pf *= RBMTag;
     }
     else {
-      max = RNBTag;
       if (BTags_.at(it)) pf *= RNBMTag;
       else pf *= RNBTag;
     }
-    pf = pf / max;
     return pf;
   }
 
@@ -426,6 +441,34 @@ public:
     return PScale;
   }
 
+  vector<double> CalcPScalesVectorFunc(vector<TLorentzVector> LVJets_, const double * scales, int debug_ = 0) {
+    vector<double> out;
+    for (unsigned ij = 0; ij < LVJets_.size(); ++ij) {
+      double p = CalcPScaleFunc(LVJets_.at(ij).Eta(),LVJets_.at(ij).Pt(),scales[ij], debug_);
+      out.push_back(p);
+    }
+    return out;
+  }
+
+  vector<double> CalcPMassVector(vector<TLorentzVector> jets) {
+    double lepw = (jets[4] + jets[5]).M();
+    double lept = (jets[4] + jets[5] + jets[3]).M();
+    double hadw = (jets[0]+jets[1]).M();
+    double hadt = (jets[0]+jets[1]+jets[2]).M();
+    double plepw = CalcPWMass(lepw);
+    double plept = CalcPTMass(lept);
+    double phadw = CalcPWMass(hadw);
+    double phadt = CalcPTMass(hadt);
+    vector<double> out{phadw,phadt,plepw,plept};
+    return out;
+  }
+
+  vector<double> CalcPMassVector(vector<TLorentzVector> jets, TLorentzVector lep, TLorentzVector neu) {
+    jets.push_back(lep);
+    jets.push_back(neu);
+    return CalcPMassVector(jets);
+  }
+
   double CalcPW(TLorentzVector vv) {
     return WMassDis->Eval(vv.M());
   }
@@ -446,19 +489,6 @@ public:
     return TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
   }
 
-  // double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, vector<TLorentzVector> Neus_, TLorentzVector &NeuOut) {
-  //   double PLep = 0;
-  //   for (unsigned ineu = 0; ineu < Neus_.size(); ++ineu) {
-  //     TLorentzVector Neu_ = Neus_.at(ineu);
-  //     double PLepTMassTemp = TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
-  //     if (PLepTMassTemp > PLep) {
-  //       PLep = PLepTMassTemp;
-  //       NeuOut = Neu_;
-  //     }
-  //   }
-  //   return PLep;
-  // }
-
   double CalcPLep(TLorentzVector LepB_, TLorentzVector Lep_, TLorentzVector LVMET, TLorentzVector &NeuOut) {
     vector<TLorentzVector> Neutrinos;
     double PNeutrino = SolveNeutrinos(Lep_, LVMET, Neutrinos);
@@ -472,7 +502,7 @@ public:
         NeuOut = Neu_;
       }
     }
-    PLep *= CalcPdPhi(LepB_.DeltaPhi(Lep_ + NeuOut));
+    // PLep *= CalcPdPhi(LepB_.DeltaPhi(Lep_ + NeuOut));
     return PLep;
   }
 
@@ -485,7 +515,7 @@ public:
     if (Neutrinos.at(1).DeltaR(GenNeu) < Neu_.DeltaR(GenNeu)) Neu_ = Neutrinos.at(1);
     PLep = TopMassDis->Eval((Lep_ + Neu_ + LepB_).M()) * WMassDis->Eval((Lep_ + Neu_).M());
     NeuOut = Neu_;
-    PLep *= CalcPdPhi(LepB_.DeltaPhi(Lep_ + Neu_));
+    // PLep *= CalcPdPhi(LepB_.DeltaPhi(Lep_ + Neu_));
     return PLep;
   }
 
@@ -496,7 +526,22 @@ public:
     return PHad;
   }
 
-  // Temporary piece for evaluating dPhi of Leptonic W and b
+  vector<int> Opt;
+  void SetExtra(int opt_) {
+    Opt.clear();
+    while (opt_) {
+      Opt.push_back(opt_%10);
+      opt_ = opt_ / 10;
+    }
+  }
+
+  // vector<double> CalcPExtra(vector<TLorentzVector> jets) {
+  //   for (unsigned iopt = 0; iopt < Opt.size(); ++iopt) {
+  //
+  //   }
+  // }
+
+  // Snippets for evaluating dPhi of Leptonic W and b
   TFile* fdPhi;
   TH1D* hdPhi;
   void SetfdPhi() {

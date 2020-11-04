@@ -24,6 +24,7 @@
 #include <TF1.h>
 #include <TFitResult.h>
 #include <TClonesArray.h>
+#include <TTree.h>
 #include <TLorentzVector.h>
 #include <TProfile.h>
 #include <TEfficiency.h>
@@ -94,11 +95,11 @@ public:
   // Assigning Gen Particles
   int AssignGenParticles();
   int WP, GenWPB, GenHadT, GenHadB, GenHadW, GenLepT, GenLepB, GenLepW, GenLep, GenNeu;
-  TLorentzVector LVGenWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu, LVGenLF0, LVGenLF1;
+  // TLorentzVector LVGenWP, LVGenWPB, LVGenHadT, LVGenHadB, LVGenHadW, LVGenLepT, LVGenLepB, LVGenLepW, LVGenLep, LVGenNeu, LVGenLF0, LVGenLF1;
   vector<TLorentzVector> LVGenOutSort;
   vector<int> GenLFJet, GenOutSort;
   int GenWPT, GenWPTB, GenWPTW, GenOtT, GenOtB, GenOtW;
-  TLorentzVector LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtT, LVGenOtB, LVGenOtW;
+  // TLorentzVector LVGenWPT, LVGenWPTB, LVGenWPTW, LVGenOtT, LVGenOtB, LVGenOtW;
 
   TLorentzVector GetGenParticleP4(int igen);
 

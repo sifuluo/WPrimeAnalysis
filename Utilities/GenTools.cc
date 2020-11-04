@@ -64,22 +64,6 @@ public:
     return hist;
   }
 
-  double CalcPerm(vector<TLorentzVector> lv, int isample) {
-    //
-    double p = 1.;
-    TLorentzVector hadt = lv[0] + lv[1] + lv[2];
-    TLorentzVector lept = lv[3] + lv[4] + lv[5];
-    // if (doWPBPt) {
-    //   double pWPBPt = EvalP("WPBPt",lv.at(4).Pt(),isample);
-    //   p *= pWPBPt;
-    // } // Elaborated version
-    // for (unsigned iplot = 0; iplot < PNames.size(); ++iplot) {
-    //   if (doFlags.at(iplot)) p *= EvalP(PNames.at(iplot), doValue(iplot))
-    // } // Shortened version
-    return 0;
-
-  }
-
   // double doValue(vector<>)
 
   vector<bool> doFlags;
