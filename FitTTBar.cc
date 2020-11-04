@@ -38,7 +38,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   a->SetOutput(savepath, savename);
   a->DebugMode(debug);
   a->CDOut();
-  TTree* t = new TTree("t","EventTree");
+  // TTree* t = new TTree("t","EventTree");
   vector<double>* PScales = new vector<double>; // LF0 LF1 HadB LepB
   vector<double>* PPreMass = new vector<double>; // HadW HadT LepW LepT
   vector<double>* PPostMass = new vector<double>; // HadW HadT LepW LepT
@@ -46,12 +46,12 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   // vector<double>* POthers = new vector<double>;
   vector<double>* Scales = new vector<double>;
   Hypothesis Pre, Post;
-  t->Branch("PScales",&PScales);
-  t->Branch("PPreMass",&PPreMass);
-  t->Branch("PPostMass",&PPostMass);
-  t->Branch("PBTags",&PBTags);
-  // t->Branch("POthers",&POthers);
-  t->Branch("Scales",&Scales);
+  a->t->Branch("PScales",&PScales);
+  a->t->Branch("PPreMass",&PPreMass);
+  a->t->Branch("PPostMass",&PPostMass);
+  a->t->Branch("PBTags",&PBTags);
+  // a->t->Branch("POthers",&POthers);
+  a->t->Branch("Scales",&Scales);
   Pre.BookBranches(t, "Pre", false);
   Post.BookBranches(t, "Post", false);
 
@@ -110,7 +110,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
 
 
     a->Tree_Fill();
-    t->Fill();
+    // a->t->Fill();
   }
 
   a->Tree_Save();

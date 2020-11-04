@@ -692,8 +692,8 @@ pair<double, vector<TLorentzVector> > Analyzer::SolveTTbar(vector<TLorentzVector
 
 void Analyzer::Tree_Init(int SaveTreeLevel = 3) {
   // TString ofilename = ofile->GetName();
-  // TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
-  TreeFile = new TFile(outputfolder + "TruthTree.root","RECREATE");
+  TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
+  // TreeFile = new TFile(outputfolder + "TruthTree"".root","RECREATE");
   t = new TTree("t0","Event Tree");
   CDOut();
   bool savegen = false;
