@@ -304,8 +304,9 @@ public:
     ParticleSets.push_back(prejets);
     ParticleSets.push_back(outjets);
 
-    //parts are LFJet1, LFJet2, HadB, LepB, WPB(Left empty), Lepton, Neutrino
+    // parts are LFJet1, LFJet2, HadB, LepB, WPB(Left empty), Lepton, Neutrino
     return out;
+    // out is vector of Scales(4), PScales(4), PPreMass(pHadW, pHadT, pLepW, pLepT), PPostMass(same as pre)
   }
 
   // Unfinished outputs

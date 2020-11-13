@@ -6,6 +6,7 @@ error        = batchlogs/$(ClusterID)_$(SampleType)_$(ProcID).err
 log          = batchlogs/$(ClusterID)_$(SampleType)_$(ProcID).log
 universe     = vanilla
 Requirements = (OpSysAndVer =?= "CentOS7")
-+JobFlavour  = "espresso"
++JobFlavour  = "workday"
+periodic_remove = (time() - QDate) > (100 * 3600)
 RequestCpus  = 2
 queue 20

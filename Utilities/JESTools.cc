@@ -273,34 +273,78 @@ public:
   }
 
   double CalcPFlavor(vector<int> perm_, vector<bool> BTags_) {
+    vector<bool> btags;
+    for (unsigned it = 0; it < perm_.size(); ++it) {
+      btags.push_back(BTags_.at(perm_.at(it)));
+    }
+    return CalcPFlavor(btags);
+    // double pf = 1;
+    // if (BTags_.at(perm_.at(0))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
+    // else pf *= RNBTag; // Non-b-jet tagged non-b;
+    // if (BTags_.at(perm_.at(1))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
+    // else pf *= RNBTag; // Non-b-jet tagged non-b;
+    // if (BTags_.at(perm_.at(2))) pf *= RBTag; // b-jet tagged as a b;
+    // else pf *= RBMTag; // b-jet tagged to be a non-b;
+    // if (BTags_.at(perm_.at(3))) pf *= RBTag; // b-jet tagged as a b;
+    // else pf *= RBMTag; // b-jet tagged to be a non-b;
+    // if(perm_.size() > 4){
+    //   if (BTags_.at(perm_.at(4))) pf *= RBTag; // b-jet tagged as a b;
+    //   else pf *= RBMTag; // b-jet tagged to be a non-b;
+    // }
+    // return pf;
+  }
+
+  double CalcPFlavor(vector<bool> BTags_) {
     double pf = 1;
-    if (BTags_.at(perm_.at(0))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
+    if (BTags_.at(0)) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
     else pf *= RNBTag; // Non-b-jet tagged non-b;
-    if (BTags_.at(perm_.at(1))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
+    if (BTags_.at(1)) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
     else pf *= RNBTag; // Non-b-jet tagged non-b;
-    if (BTags_.at(perm_.at(2))) pf *= RBTag; // b-jet tagged as a b;
+    if (BTags_.at(2)) pf *= RBTag; // b-jet tagged as a b;
     else pf *= RBMTag; // b-jet tagged to be a non-b;
-    if (BTags_.at(perm_.at(3))) pf *= RBTag; // b-jet tagged as a b;
+    if (BTags_.at(3)) pf *= RBTag; // b-jet tagged as a b;
     else pf *= RBMTag; // b-jet tagged to be a non-b;
-    if(perm_.size() > 4){
-      if (BTags_.at(perm_.at(4))) pf *= RBTag; // b-jet tagged as a b;
+    if(BTags_.size() > 4){
+      if (BTags_.at(4)) pf *= RBTag; // b-jet tagged as a b;
       else pf *= RBMTag; // b-jet tagged to be a non-b;
     }
     return pf;
   }
 
   vector<double> CalcPFlavorVector(vector<int> perm_, vector<bool> BTags_) {
+    vector<bool> btags;
+    for (unsigned it = 0; it < perm_.size(); ++it) {
+      btags.push_back(BTags_.at(perm_.at(it)));
+    }
+    return CalcPFlavorVector(btags);
+    // vector<double> out;
+    // if (BTags_.at(perm_.at(0))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
+    // else out.push_back(RNBTag); // Non-b-jet tagged non-b;
+    // if (BTags_.at(perm_.at(1))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
+    // else out.push_back(RNBTag); // Non-b-jet tagged non-b;
+    // if (BTags_.at(perm_.at(2))) out.push_back(RBTag); // b-jet tagged as a b;
+    // else out.push_back(RBMTag); // b-jet tagged to be a non-b;
+    // if (BTags_.at(perm_.at(3))) out.push_back(RBTag); // b-jet tagged as a b;
+    // else out.push_back(RBMTag); // b-jet tagged to be a non-b;
+    // if(perm_.size() > 4){
+    //   if (BTags_.at(perm_.at(4))) out.push_back(RBTag); // b-jet tagged as a b;
+    //   else out.push_back(RBMTag); // b-jet tagged to be a non-b;
+    // }
+    // return out;
+  }
+
+  vector<double> CalcPFlavorVector(vector<bool> BTags_) {
     vector<double> out;
-    if (BTags_.at(perm_.at(0))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
+    if (BTags_.at(0)) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
     else out.push_back(RNBTag); // Non-b-jet tagged non-b;
-    if (BTags_.at(perm_.at(1))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
+    if (BTags_.at(1)) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
     else out.push_back(RNBTag); // Non-b-jet tagged non-b;
-    if (BTags_.at(perm_.at(2))) out.push_back(RBTag); // b-jet tagged as a b;
+    if (BTags_.at(2)) out.push_back(RBTag); // b-jet tagged as a b;
     else out.push_back(RBMTag); // b-jet tagged to be a non-b;
-    if (BTags_.at(perm_.at(3))) out.push_back(RBTag); // b-jet tagged as a b;
+    if (BTags_.at(3)) out.push_back(RBTag); // b-jet tagged as a b;
     else out.push_back(RBMTag); // b-jet tagged to be a non-b;
-    if(perm_.size() > 4){
-      if (BTags_.at(perm_.at(4))) out.push_back(RBTag); // b-jet tagged as a b;
+    if(BTags_.size() > 4){
+      if (BTags_.at(4)) out.push_back(RBTag); // b-jet tagged as a b;
       else out.push_back(RBMTag); // b-jet tagged to be a non-b;
     }
     return out;
@@ -463,7 +507,8 @@ public:
     return out;
   }
 
-  vector<double> CalcPMassVector(vector<TLorentzVector> jets, TLorentzVector lep, TLorentzVector neu) {
+  vector<double> CalcPMassVector(vector<TLorentzVector> jets_, TLorentzVector lep, TLorentzVector neu) {
+    vector<TLorentzVector> jets = jets_;
     jets.push_back(lep);
     jets.push_back(neu);
     return CalcPMassVector(jets);

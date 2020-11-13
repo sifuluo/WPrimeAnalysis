@@ -593,7 +593,7 @@ void Analyzer::SetupROOTMini() {
   RM->SetDebug(0);
 }
 
-void Analyzer::MatchJets(){
+void Analyzer::MatchJets(){ // To be removed
   AdvJetMatchMap.clear();
   AdvJetMatchMap = AdvJetMatch(LVOutPart, LVJets, JetMatchMaxDeltaR, 2.0, true, false, true);
   JetMatchMap.clear();
@@ -601,7 +601,7 @@ void Analyzer::MatchJets(){
   // AdvJetMatch(genLV, recoLV, max deltaR in the match, cut at larger than AlgodR = 0.2, if skip all gen LV with pt < 30, if skip all reco pt < 30)
 }
 
-void Analyzer::GetGenCorrectPerm() {
+void Analyzer::GetGenCorrectPerm() { // To be removed
   GenCorrectPerm.clear();
   for (unsigned i = 0; i < GenOutSort.size(); ++i) {
     int hypo = GenOutSort.at(i);
@@ -618,7 +618,7 @@ void Analyzer::GetGenCorrectPerm() {
   }
 }
 
-void Analyzer::GetRecoCorrectPerm() {
+void Analyzer::GetRecoCorrectPerm() {  // To be removed
   RecoCorrectPerm.clear();
   GetGenCorrectPerm();
   MatchJets();
@@ -627,7 +627,7 @@ void Analyzer::GetRecoCorrectPerm() {
   }
 }
 
-void Analyzer::GetRecoHypothesis(){
+void Analyzer::GetRecoHypothesis(){ // To be removed
   RecoHypothesis.clear();
   MatchedHypo = 0;
   // GenOutSort ordered as LFjet1, LFjet2, HadB, LepB, W'B
@@ -690,37 +690,69 @@ pair<double, vector<TLorentzVector> > Analyzer::SolveTTbar(vector<TLorentzVector
   return pair<double, vector<TLorentzVector> > (BestP, BestParticles);
 } // This function is not very repetitive, so it needs to be removed
 
-void Analyzer::Tree_Init(int SaveTreeLevel = 3) {
+void Analyzer::Tree_Init(int SaveTreeLevel = 5) {
   // TString ofilename = ofile->GetName();
   TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
   // TreeFile = new TFile(outputfolder + "TruthTree"".root","RECREATE");
-  t = new TTree("t0","Event Tree");
+  t = new TTree("t","Event Tree");
   CDOut();
   bool savegen = false;
   bool savereco = false;
+  bool fitreco = false;
   if (SaveTreeLevel > 0) savegen = true;
   if (SaveTreeLevel > 2) savereco = true;
+  if (SaveTreeLevel > 4) fitreco = true;
 
   Gen.BookBranches(t,"Gen",savegen);
+  if (SaveTreeLevel < 2) return;
   Reco.BookBranches(t,"Reco",savereco);
+  if (SaveTreeLevel < 4) return;
+  Reco_Fitted.BookBranches(t,"Reco_Fitted",fitreco);
 
 }
 
-void Analyzer::Tree_Reco() {
+vector<int> Analyzer::Tree_Reco() {
+  Reco.Reset();
   vector<TLorentzVector> genvec = Gen.Observables();
   vector<TLorentzVector> recovec = vector<TLorentzVector>(5);
+  vector<bool> btags = vector<bool>(5);
+  vector<int> perm = vector<int>(5);
   double mdr_;
   map<int,int>recomap = JetMatch(genvec, LVJets, mdr_, 0.4, 0.5);
   for (auto it = recomap.begin(); it != recomap.end(); ++it) {
     recovec.at(it->first) = LVJets.at(it->second);
+    btags.at(it->first) = BTags.at(it->second);
+    perm.at(it->first) = it->second;
   }
-  for (unsigned ir = 0; ir < 5; ++ir) {
-    *(Reco.pObservables().at(ir)) = recovec.at(ir);
-  }
+  Reco.SetLV(recovec);
+  Reco.BTags = btags;
+  // for (unsigned ir = 0; ir < 5; ++ir) {
+  //   *(Reco.pObservables().at(ir)) = recovec.at(ir);
+  // }
   Reco.Lep = LVLeptons[0];
   Reco.Neu = LVMET;
   Reco.Neu.SetZ(Gen.Neu.Z());
   Reco.Calculate(SampleType);
+  return perm;
+}
+
+vector<vector<double> > Analyzer::Tree_FitReco() {
+  vector<vector<double> > PVector;
+  Reco_Fitted.Reset();
+  vector<TLorentzVector> Reco5 = Reco.Observables();
+  vector<TLorentzVector> Reco4 = Reco5;
+  Reco4.resize(4);
+  RM->SetLep(LVLeptons[0],LVMET);
+  double pjes = RM->MinimizeP(Reco4);
+  if (pjes < 0) return PVector;
+  Reco_Fitted.BTags = Reco.BTags;
+  double pbtag = JT->CalcPFlavor(Reco.BTags);
+  vector<vector<TLorentzVector> > LVSets;
+  PVector = RM->ReCalcPVector(LVSets);
+  LVSets[1][4] = Reco.WPB;
+  Reco_Fitted.SetLV(LVSets[1]);
+  Reco_Fitted.Calculate(SampleType);
+  return PVector;
 }
 
 void Analyzer::Tree_Fill() {

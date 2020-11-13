@@ -12,6 +12,8 @@ public:
   }
   TLorentzVector WPB, HadB, LF0, LF1, LepB, Lep, Neu, HadW, HadT, LepW, LepT, WP;
   TLorentzVector *pWPB, *pHadB, *pLF0, *pLF1, *pLepB, *pLep, *pNeu, *pHadW, *pHadT, *pLepW, *pLepT, *pWP;
+  double FL_WPMass, LL_WPMass;
+  vector<bool> BTags;
   void MakePointers() {
     pWPB= &WPB;
     pHadB= &HadB;
@@ -30,6 +32,8 @@ public:
     LF0 = LF1 = HadB = LepB = WPB = Lep = Neu = TLorentzVector();
     HadW = HadT = LepW = LepT = TLorentzVector();
     WP = TLorentzVector();
+    FL_WPMass = LL_WPMass = 0;
+    BTags.clear();
   }
   void Calculate(int SampleType) {
     HadW = LF0 + LF1;
@@ -42,6 +46,8 @@ public:
       if (WPB.DeltaR(HadT) > WPB.DeltaR(LepT)) WP = WPB + HadT;
       else WP = WPB + LepT;
     }
+    FL_WPMass = (WPB + HadT).M();
+    LL_WPMass = (WPB + LepT).M();
   }
   vector<TLorentzVector> Observables() {
     vector<TLorentzVector> out{LF0, LF1, HadB, LepB, WPB};
@@ -86,6 +92,11 @@ public:
     t->Branch(name + "HadW",&(pHadW));
     t->Branch(name + "LepT",&(pLepT));
     t->Branch(name + "LepW",&(pLepW));
+  }
+  bool AllFilled() {
+    TLorentzVector lv0 = TLorentzVector();
+    if (LF0 == lv0 || LF1 == lv0 || HadB == lv0 || LepB == lv0 || WPB == lv0) return false;
+    else return true;
   }
 
 

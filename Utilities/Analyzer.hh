@@ -130,9 +130,10 @@ public:
   TFile *TreeFile;
   TTree* t;
   // Branches to store in the tree and Reco Branch containers
-  Hypothesis Gen, Reco;
+  Hypothesis Gen, Reco, Reco_Fitted;
   void Tree_Init(int SaveTreeLevel);
-  void Tree_Reco();
+  vector<int> Tree_Reco();
+  vector<vector<double> > Tree_FitReco();
   void Tree_Fill();
   void Tree_Save();
 
