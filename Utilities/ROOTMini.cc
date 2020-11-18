@@ -262,11 +262,12 @@ public:
 
     vector<double> Probs{PScale, PHad, PLep, radical};
     vector<TLorentzVector> parts = ScaledJets;
+    parts.push_back(TLorentzVector());
     parts.push_back(Lepton);
     parts.push_back(Neutrino);
 
     Particles = parts;
-    //parts are LFJet1, LFJet2, HadB, LepB, Lepton, Neutrino
+    //parts are LFJet1, LFJet2, HadB, LepB, WPB placeholder, Lepton, Neutrino
     return Probs;
   }
 

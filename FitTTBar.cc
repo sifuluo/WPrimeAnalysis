@@ -79,6 +79,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
     if (a->AssignGenParticles() == -1) continue;
     if (a->RecoPass == -1) continue;
     vector<int> TruePerm = a->Tree_Reco();
+    a->Tree_FitReco();
     bool AllFilled = a->Reco.AllFilled();
     PScales->clear();
     PPreMass->clear();
@@ -143,6 +144,14 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
           *PPreMass_Match = PVector[2];
           *PPostMass_Match = PVector[3];
           *PBTags_Match = a->JT->CalcPFlavorVector(thisperm, BTags);
+        }
+        else  {
+          Match.Reset();
+          Scales_Match->clear();
+          PScales_Match->clear();
+          PPreMass_Match->clear();
+          PPostMass_Match->clear();
+          PBTags_Match->clear();
         }
       }
     }

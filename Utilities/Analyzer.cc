@@ -703,6 +703,10 @@ void Analyzer::Tree_Init(int SaveTreeLevel = 5) {
   if (SaveTreeLevel > 2) savereco = true;
   if (SaveTreeLevel > 4) fitreco = true;
 
+  Gen.SetSampleType(SampleType);
+  Reco.SetSampleType(SampleType);
+  Reco_Fitted.SetSampleType(SampleType);
+
   Gen.BookBranches(t,"Gen",savegen);
   if (SaveTreeLevel < 2) return;
   Reco.BookBranches(t,"Reco",savereco);

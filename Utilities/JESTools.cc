@@ -206,7 +206,8 @@ public:
     WMassDis = new TF1("WBW","[0]*TMath::BreitWigner(x,[1],[2])",0.0,200.0);
     // TopMassDis->SetParameters(100.,172.7,1.32); // Gen-level
     TopMassDis->SetParameters(100.,171.186,26.76); // Reco-Level Leptonic Top
-    WMassDis->SetParameters(100,80.385,2.085);
+    // WMassDis->SetParameters(100,80.385,2.085);
+    WMassDis->SetParameters(100,80.385,2.738);
     TopMassDis->SetParameter(0,100./TopMassDis->Eval(171.186)); // normalized it to peak at y = 1;
     WMassDis->SetParameter(0,100./WMassDis->Eval(80.385)); // normalized it to peak at y = 1;
   }
@@ -242,11 +243,6 @@ public:
           for (int ilepb = 0; ilepb < jetsize; ++ ilepb) {
             if (ilepb == ihad1 || ilepb == ihad2 || ilepb == ihadb) continue;
             vector<int> perm{ihad1,ihad2,ihadb,ilepb};
-            // perm.clear();
-            // perm.push_back(ihad1);
-            // perm.push_back(ihad2);
-            // perm.push_back(ihadb);
-            // perm.push_back(ilepb);
             Permutations.push_back(perm);
           }
         }
@@ -278,20 +274,6 @@ public:
       btags.push_back(BTags_.at(perm_.at(it)));
     }
     return CalcPFlavor(btags);
-    // double pf = 1;
-    // if (BTags_.at(perm_.at(0))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
-    // else pf *= RNBTag; // Non-b-jet tagged non-b;
-    // if (BTags_.at(perm_.at(1))) pf *= RNBMTag; // Non-b-jet is tagged to be a b;
-    // else pf *= RNBTag; // Non-b-jet tagged non-b;
-    // if (BTags_.at(perm_.at(2))) pf *= RBTag; // b-jet tagged as a b;
-    // else pf *= RBMTag; // b-jet tagged to be a non-b;
-    // if (BTags_.at(perm_.at(3))) pf *= RBTag; // b-jet tagged as a b;
-    // else pf *= RBMTag; // b-jet tagged to be a non-b;
-    // if(perm_.size() > 4){
-    //   if (BTags_.at(perm_.at(4))) pf *= RBTag; // b-jet tagged as a b;
-    //   else pf *= RBMTag; // b-jet tagged to be a non-b;
-    // }
-    // return pf;
   }
 
   double CalcPFlavor(vector<bool> BTags_) {
@@ -317,20 +299,6 @@ public:
       btags.push_back(BTags_.at(perm_.at(it)));
     }
     return CalcPFlavorVector(btags);
-    // vector<double> out;
-    // if (BTags_.at(perm_.at(0))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
-    // else out.push_back(RNBTag); // Non-b-jet tagged non-b;
-    // if (BTags_.at(perm_.at(1))) out.push_back(RNBMTag); // Non-b-jet is tagged to be a b;
-    // else out.push_back(RNBTag); // Non-b-jet tagged non-b;
-    // if (BTags_.at(perm_.at(2))) out.push_back(RBTag); // b-jet tagged as a b;
-    // else out.push_back(RBMTag); // b-jet tagged to be a non-b;
-    // if (BTags_.at(perm_.at(3))) out.push_back(RBTag); // b-jet tagged as a b;
-    // else out.push_back(RBMTag); // b-jet tagged to be a non-b;
-    // if(perm_.size() > 4){
-    //   if (BTags_.at(perm_.at(4))) out.push_back(RBTag); // b-jet tagged as a b;
-    //   else out.push_back(RBMTag); // b-jet tagged to be a non-b;
-    // }
-    // return out;
   }
 
   vector<double> CalcPFlavorVector(vector<bool> BTags_) {
@@ -495,8 +463,8 @@ public:
   }
 
   vector<double> CalcPMassVector(vector<TLorentzVector> jets) {
-    double lepw = (jets[4] + jets[5]).M();
-    double lept = (jets[4] + jets[5] + jets[3]).M();
+    double lepw = (jets[6] + jets[5]).M();
+    double lept = (jets[6] + jets[5] + jets[3]).M();
     double hadw = (jets[0]+jets[1]).M();
     double hadt = (jets[0]+jets[1]+jets[2]).M();
     double plepw = CalcPWMass(lepw);

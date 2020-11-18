@@ -14,6 +14,11 @@ public:
   TLorentzVector *pWPB, *pHadB, *pLF0, *pLF1, *pLepB, *pLep, *pNeu, *pHadW, *pHadT, *pLepW, *pLepT, *pWP;
   double FL_WPMass, LL_WPMass;
   vector<bool> BTags;
+  int SampleType;
+
+  void SetSampleType(int st_) {
+    SampleType = st_;
+  }
   void MakePointers() {
     pWPB= &WPB;
     pHadB= &HadB;
@@ -28,14 +33,16 @@ public:
     pLepT= &LepT;
     pWP= &WP;
   }
-  void Reset() {
+  void Reset(int st_ = -1) {
+    if (st_ != -1) SampleType = st_;
     LF0 = LF1 = HadB = LepB = WPB = Lep = Neu = TLorentzVector();
     HadW = HadT = LepW = LepT = TLorentzVector();
     WP = TLorentzVector();
     FL_WPMass = LL_WPMass = 0;
     BTags.clear();
   }
-  void Calculate(int SampleType) {
+  void Calculate(int st_ = -1) {
+    if (st_ != -1) SampleType = st_;
     HadW = LF0 + LF1;
     HadT = HadW + HadB;
     LepW = Lep + Neu;
@@ -95,7 +102,7 @@ public:
   }
   bool AllFilled() {
     TLorentzVector lv0 = TLorentzVector();
-    if (LF0 == lv0 || LF1 == lv0 || HadB == lv0 || LepB == lv0 || WPB == lv0) return false;
+    if (LF0 == lv0 || LF1 == lv0 || HadB == lv0 || LepB == lv0 || (WPB == lv0 && SampleType != 2)) return false;
     else return true;
   }
 
