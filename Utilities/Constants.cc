@@ -33,8 +33,12 @@ public:
   const double xsecFL = 1.218;
   const double xsecLL = 1.229;
   const double xsecBG = 127100.;
-  const double cmsLumi= 63.67;
-  const double lhcLumi= 67.86;
+  const double cmsLumi = 146.45;
+  const double cmsLumi18 = 63.67;
+  const double cmsLumi17 = 44.98;
+  const double cmsLumi16 = 37.80;
+  const double cmsLumi15 = 3.80;
+  const double lhcLumi18 = 67.86;
 };
 
 namespace Constants {
@@ -45,8 +49,12 @@ namespace Constants {
   const double xsecLL = 1.229;
   const double xsecBG = 127100.;
   const double Lumi = 1.;
-  const double cmsLumi= 63.67;
-  const double lhcLumi= 67.86;
+  const double cmsLumi = 146.45;
+  const double cmsLumi18 = 63.67;
+  const double cmsLumi17 = 44.98;
+  const double cmsLumi16 = 37.80;
+  const double cmsLumi15 = 3.80;
+  const double lhcLumi18 = 67.86;
   const double ScaleFL = xsecFL * Lumi / nEvtFL;
   const double ScaleLL = xsecLL * Lumi / nEvtLL;
   const double ScaleBG = xsecBG * Lumi / nEvtBG;
