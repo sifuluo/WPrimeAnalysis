@@ -31,15 +31,20 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   cout << "start" << endl;
   Analyzer *a = new Analyzer(SampleType, irun, 30);
   TString savepath = "results/";
-  TString savename = "FitTTBar";
+  TString savename = "FitTTBarWPB";
   double dRToMatch = 0.4;
   cout << "Running " << savename << endl;
   a->SetupROOTMini();
   a->SetOutput(savepath, savename);
   a->DebugMode(debug);
   a->CDOut();
+  TH1F* METPt = new TH1F("METPt","METPt",400,0,400);
   TH2F* WPMass = new TH2F("WPMass","WPMass; FL-like ; LL-like",1000,0,1000,1000,0,1000);
   TH2F* WPMassMatched = new TH2F("WPMassMatched","WPMassMatched; FL-like ; LL-like",1000,0,1000,1000,0,1000);
+  TH1F* WPBPt = new TH1F("WPBPt","WPBPt",500,0,500);
+  TH1F* OtherRemainPt = new TH1F("OtherRemainPt","OtherRemainPt",500,0,500);
+  TH1F* WPBdPhi = new TH1F("WPBdPhi","WPBdPhi",40,0,4);
+  TH1F* OtherRemaindPhi = new TH1F("OtherRemaindPhi","OtherRemaindPhi",40,0,4);
   a->Tree_Init();
   // TTree* t = new TTree("t","EventTree");
   vector<double>* PScales = new vector<double>; // LF0 LF1 HadB LepB
@@ -78,6 +83,9 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
     a->ReadEvent(entry);
     if (a->AssignGenParticles() == -1) continue;
     if (a->RecoPass == -1) continue;
+    a->CountEvent("PassPreSelection");
+    if (a->nBJets < 2) continue;
+    a->CountEvent("Pass2BJets");
     vector<int> TruePerm = a->Tree_Reco();
     a->Tree_FitReco();
     bool AllFilled = a->Reco.AllFilled();
@@ -93,12 +101,13 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
     PBTags_Match->clear();
     Scales_Match->clear();
 
-    a->CountEvent("PassPreSelection");
     vector<TLorentzVector> Jets = a->LVJets;
+    TLorentzVector hadb;
     vector<bool> BTags = a->BTags;
     a->RM->SetLep(a->LVLeptons[0],a->LVMET);
+    METPt->Fill(a->LVMET.Pt());
     vector<vector<int> > perms = a->JT->MakePermutations5(Jets.size());
-    double BestP = -1;
+    double BestP = 0;
     for (unsigned iperm = 0; iperm < perms.size(); ++iperm) {
       bool IsTruePerm;
       vector<int> thisperm = perms.at(iperm);
@@ -135,6 +144,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
           for (unsigned ij = 0; ij < 4; ++ij) {
             if (Pre.Observables().at(ij) != LVPerm.at(ij)) cout << endl << "Pre-scale " << ij<< " th jet is inconsistent" <<endl;
           }
+          hadb = LVPerm4[2];
         }
         if (IsTruePerm) {
           Match.SetLV(LVSets[1]);
@@ -155,12 +165,52 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
         }
       }
     }
+    // cout <<endl;
+    // (hadb - Pre.HadB).Print();
+    // cout <<endl;
+    // (Pre.HadB * Scales->at(2) - Post.HadB).Print();
+    // cout <<endl;
     a->Tree_Fill();
-    if (BestP > 0) {
-      WPMass->Fill(Post.FL_WPMass,Post.LL_WPMass);
-      if (AllFilled) WPMassMatched->Fill(Match.FL_WPMass,Match.LL_WPMass);
+    if (BestP <= 0) continue;
+    WPMass->Fill(Post.FL_WPMass,Post.LL_WPMass);
+    if (AllFilled) WPMassMatched->Fill(Match.FL_WPMass,Match.LL_WPMass);
+
+    if (Jets.size() > 5 && SampleType != 2) {
+      vector<TLorentzVector> RemainJets;
+      for (TLorentzVector jet : Jets) {
+        if (jet==Pre.LF0 || jet==Pre.LF1 || jet==Pre.HadB || jet==Pre.LepB) continue;
+        RemainJets.push_back(jet);
+      }
+      if (RemainJets.size() > Jets.size() - 4) {
+        cout << "How can you find so many remaining jets?" <<endl;
+        cout << "Jets: " << Jets.size() << " ; RemainJets: " << RemainJets.size() << endl;
+        // cout << "Jets List: " <<endl;
+        // for (TLorentzVector jet: Jets) {
+        //   jet.Print();
+        //   cout << endl;
+        // }
+        // cout << endl << "Remains:" <<endl;
+        // for (TLorentzVector jet: RemainJets) {
+        //   jet.Print();
+        //   cout <<endl;
+      }
+      TLorentzVector WPTop;
+      if (SampleType == 0) WPTop = Post.HadT;
+      if (SampleType == 1) WPTop = Post.LepT;
+      TLorentzVector RecoWPB = RemainJets[0];
+      for (auto jet : RemainJets) {
+        if (jet.DeltaR(a->Gen.WPB) < RecoWPB.DeltaR(a->Gen.WPB)) RecoWPB = jet;
+      }
+      if (RecoWPB.DeltaR(a->Gen.WPB) < 0.4) {
+        WPBPt->Fill(RecoWPB.Pt());
+        WPBdPhi->Fill(RecoWPB.DeltaPhi(WPTop));
+        for (auto jet : RemainJets) {
+          if (jet == RecoWPB) continue;
+          OtherRemainPt->Fill(jet.Pt());
+          OtherRemaindPhi->Fill(jet.DeltaPhi(WPTop));
+        }
+      }
     }
-    // a->t->Fill();
   }
 
   a->Tree_Save();

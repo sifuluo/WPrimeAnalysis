@@ -77,6 +77,7 @@ public:
   int GenPass, RecoPass;
   vector<GenParticle*> GenParticles;
   vector<Jet*> AllJets, Jets, BJets, NBJets, GenJets;
+  int nBJets, nNBJets;
   vector<Electron*> Electrons;
   vector<Muon*> Muons;
   MissingET* MET;

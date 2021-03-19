@@ -12,6 +12,8 @@ public:
   }
   TLorentzVector WPB, HadB, LF0, LF1, LepB, Lep, Neu, HadW, HadT, LepW, LepT, WP;
   TLorentzVector *pWPB, *pHadB, *pLF0, *pLF1, *pLepB, *pLep, *pNeu, *pHadW, *pHadT, *pLepW, *pLepT, *pWP;
+  vector<TLorentzVector*> pHypoVector;
+  vector<TString> HypoNames;
   double FL_WPMass, LL_WPMass;
   vector<bool> BTags;
   int SampleType;
@@ -32,6 +34,9 @@ public:
     pLepW= &LepW;
     pLepT= &LepT;
     pWP= &WP;
+    pHypoVector = vector<TLorentzVector*>{pLF0,pLF1,pHadB,pLepB,pWPB,pLep,pNeu,pWP,pHadT,pHadW,pLepT,pLepW};
+    HypoNames = vector<TString>{"LF0","LF1","HadB","LepB","WPB","Lep","Neu","WP","HadT","HadW","LepT","LepW"};
+    //                            0     1      2      3     4     5     6     7    8      9      10     11
   }
   void Reset(int st_ = -1) {
     if (st_ != -1) SampleType = st_;
@@ -57,7 +62,7 @@ public:
     LL_WPMass = (WPB + LepT).M();
   }
   vector<TLorentzVector> Observables() {
-    vector<TLorentzVector> out{LF0, LF1, HadB, LepB, WPB};
+    vector<TLorentzVector> out{*pLF0, *pLF1, *pHadB, *pLepB, *pWPB};
     return out;
   }
   vector<TLorentzVector*> pObservables() {
@@ -84,7 +89,7 @@ public:
       cout << endl << "Vector size = " << size <<" ? Is this intentional?" <<endl;
     }
   }
-  void BookBranches(TTree* t, TString name, int complete) {
+  void BookBranches(TTree* t, TString name, int complete = true) {
     t->Branch(name + "LF0",&(pLF0));
     t->Branch(name + "LF1",&(pLF1));
     t->Branch(name + "HadB",&(pHadB));

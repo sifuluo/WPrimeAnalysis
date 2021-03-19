@@ -99,7 +99,7 @@ void Analyzer::DebugMode(int debug_ = -2) {
   debug = debug_;
   if (debug == -1) {
     SetStartEntry(0);
-    ProcessEntries(1000);
+    ProcessEntries(100);
   }
   else if (debug > -1){
     SetStartEntry(debug);
@@ -108,7 +108,7 @@ void Analyzer::DebugMode(int debug_ = -2) {
 }
 
 void Analyzer::SaveOutput() {
-  Plots1D["EventCounter"]->GetXaxis()->SetRange(1,CounterLabels.size()+1);
+  Plots1D["EventCounter"]->GetXaxis()->SetRange(1,CounterLabels.size()+2);
   ofile->Write();
   ofile->Save();
 }
@@ -184,6 +184,8 @@ void Analyzer::GetInfos() {
       LVNBJets.push_back(jet->P4());
     }
   }
+  nBJets = BJets.size();
+  nNBJets = NBJets.size();
   GenJets.clear();
   LVGenJets.clear();
   for (int it = 0; it < branchGenJet->GetEntries(); ++it) {
@@ -691,10 +693,14 @@ pair<double, vector<TLorentzVector> > Analyzer::SolveTTbar(vector<TLorentzVector
 } // This function is not very repetitive, so it needs to be removed
 
 void Analyzer::Tree_Init(int SaveTreeLevel = 5) {
+  // SaveTreeLevel: 0,2,4 for saving Gen, Reco, RecoFitted basic branches.
+  //                1,3,5 for saving complete tree of those hypo sets.
   // TString ofilename = ofile->GetName();
   TreeFile = new TFile(outputfolder+"Tree_"+outputname+".root","RECREATE");
   // TreeFile = new TFile(outputfolder + "TruthTree"".root","RECREATE");
   t = new TTree("t","Event Tree");
+  t->Branch("nBJets",&nBJets);
+  t->Branch("nNBJets",&nNBJets);
   CDOut();
   bool savegen = false;
   bool savereco = false;
@@ -719,8 +725,8 @@ vector<int> Analyzer::Tree_Reco() {
   Reco.Reset();
   vector<TLorentzVector> genvec = Gen.Observables();
   vector<TLorentzVector> recovec = vector<TLorentzVector>(5);
-  vector<bool> btags = vector<bool>(5);
-  vector<int> perm = vector<int>(5);
+  vector<bool> btags = vector<bool>(5,false);
+  vector<int> perm = vector<int>(5,-1);
   double mdr_;
   map<int,int>recomap = JetMatch(genvec, LVJets, mdr_, 0.4, 0.5);
   for (auto it = recomap.begin(); it != recomap.end(); ++it) {
