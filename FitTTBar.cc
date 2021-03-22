@@ -31,7 +31,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   cout << "start" << endl;
   Analyzer *a = new Analyzer(SampleType, irun, 30);
   TString savepath = "results/";
-  TString savename = "FitTTBarWPB";
+  TString savename = "FitTTBar3B";
   double dRToMatch = 0.4;
   cout << "Running " << savename << endl;
   a->SetupROOTMini();
@@ -47,6 +47,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   TH1F* OtherRemaindPhi = new TH1F("OtherRemaindPhi","OtherRemaindPhi",40,0,4);
   a->Tree_Init();
   // TTree* t = new TTree("t","EventTree");
+  double PBest;
   vector<double>* PScales = new vector<double>; // LF0 LF1 HadB LepB
   vector<double>* PPreMass = new vector<double>; // HadW HadT LepW LepT
   vector<double>* PPostMass = new vector<double>; // HadW HadT LepW LepT
@@ -54,6 +55,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   // vector<double>* POthers = new vector<double>;
   vector<double>* Scales = new vector<double>;
 
+  double PBest_Match;
   vector<double>* PScales_Match = new vector<double>; // LF0 LF1 HadB LepB
   vector<double>* PPreMass_Match = new vector<double>; // HadW HadT LepW LepT
   vector<double>* PPostMass_Match = new vector<double>; // HadW HadT LepW LepT
@@ -62,6 +64,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   vector<double>* Scales_Match = new vector<double>;
   Hypothesis Pre, Post, Match;
 
+  a->t->Branch("PBest",&PBest);
   a->t->Branch("PScales",&PScales);
   a->t->Branch("PPreMass",&PPreMass);
   a->t->Branch("PPostMass",&PPostMass);
@@ -69,6 +72,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
   // a->t->Branch("POthers",&POthers);
   a->t->Branch("Scales",&Scales);
 
+  a->t->Branch("PBest_Match",&PBest_Match);
   a->t->Branch("PScales_Match",&PScales_Match);
   a->t->Branch("PPreMass_Match",&PPreMass_Match);
   a->t->Branch("PPostMass_Match",&PPostMass_Match);
@@ -84,8 +88,8 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
     if (a->AssignGenParticles() == -1) continue;
     if (a->RecoPass == -1) continue;
     a->CountEvent("PassPreSelection");
-    if (a->nBJets < 2) continue;
-    a->CountEvent("Pass2BJets");
+    if (a->nBJets < 3) continue;
+    a->CountEvent("Pass3BJets");
     vector<int> TruePerm = a->Tree_Reco();
     a->Tree_FitReco();
     bool AllFilled = a->Reco.AllFilled();
@@ -118,7 +122,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
       LVPerm4.resize(4);
       if (find(LVPerm.begin(), LVPerm.end(), TLorentzVector()) != LVPerm.end()) continue;
       double PJes = a->RM->MinimizeP(LVPerm4);
-      if (PJes < 0) continue;
+      if (PJes <= 0) continue;
       double PPerm = PJes * thispbtags;
       if (PPerm > BestP || IsTruePerm) {
         vector<vector<TLorentzVector> > LVSets;
@@ -132,6 +136,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
           Pre.Calculate(SampleType);
           Post.Calculate(SampleType);
           *Scales = PVector[0];
+          PBest = PPerm;
           *PScales = PVector[1];
           *PPreMass = PVector[2];
           *PPostMass = PVector[3];
@@ -150,6 +155,7 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
           Match.SetLV(LVSets[1]);
           Match.Calculate(SampleType);
           *Scales_Match = PVector[0];
+          PBest_Match = PPerm;
           *PScales_Match = PVector[1];
           *PPreMass_Match = PVector[2];
           *PPostMass_Match = PVector[3];
@@ -170,8 +176,8 @@ void FitTTBar(int SampleType = 0, int irun = 1, int OptionCode = 0, int debug = 
     // cout <<endl;
     // (Pre.HadB * Scales->at(2) - Post.HadB).Print();
     // cout <<endl;
-    a->Tree_Fill();
     if (BestP <= 0) continue;
+    a->Tree_Fill();
     WPMass->Fill(Post.FL_WPMass,Post.LL_WPMass);
     if (AllFilled) WPMassMatched->Fill(Match.FL_WPMass,Match.LL_WPMass);
 
